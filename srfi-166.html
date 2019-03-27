@@ -1,0 +1,1738 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN"
+  'http://www.w3.org/TR/REC-html40/strict.dtd'>
+<html lang=en-US>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="keywords" content="Scheme, programming language, SRFI, format">
+    <title>SRFI 166: Monadic Formatting</title>
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png" />
+<link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css" />
+<style type="text/css">
+body { 
+   max-width: 7.6in;
+   margin: 30pt;
+}
+dt {
+   font-style: bold;
+   color: rgb(120,0,120);
+}
+.code-example {
+   background-color: rgb(241,241,241);
+}
+.output-example {
+   background-color: beige;
+   font-size: smaller;
+}
+var {
+   font-style: bold;
+   color: rgb(20,20,120);
+}
+</style>
+
+  </head>
+
+<body>
+<h1><a name="Title">Title</a></h1>
+<div class="title-text">
+
+<p>
+  SRFI 166: Monadic Formatting
+
+</div>
+<h1><a name="Author">Author</a></h1>
+
+<p>
+  Alex Shinn
+
+<h1><a name="Status">Status</a></h1>
+
+<p>
+Summary of differences from SRFI 156:
+<ul>
+  <li>State variables are first class and hygienic</li>
+  <li>Added <code>written-shared</code>, <code>pretty-shared</code></li>
+  <li>Added <code>as-color</code>, <code>pretty-colored</code></li>
+  <li>Added <code>ambiguous-is-wide?</code> state variable</li>
+  <li>Restored non-uniform comma rules as needed in India</li>
+  <li>Restored <code>upcased</code> and <code>downcased</code></li>
+  <li>Several clarifications and more examples</li>
+</ul>
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+${1:NUMBER}+at+srfi+dotschemers+dot+org">srfi-166@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-166">archive</a>.</p>
+<ul>
+  <li>Received: 2019/3/27</li>
+</ul>
+
+<h1>Table of Contents</h1>
+<ul id="toc-table">
+<li><a href="#Abstract">Abstract</a></li>
+<li><a href="#Issues">Issues</a></li>
+<li><a href="#Rationale">Rationale</a></li>
+<li><a href="#Types-and-Naming-Conventions">Types and Naming Conventions</a></li>
+<li><a href="#Specification">Specification</a></li>
+<ul>
+<li><a href="#Usage">Usage</a></li>
+<li><a href="#Formatting-Objects">Formatting Objects</a></li>
+<li><a href="#Formatting-Numbers">Formatting Numbers</a></li>
+<li><a href="#Formatting-Space">Formatting Space</a></li>
+<li><a href="#Concatenation">Concatenation</a></li>
+<li><a href="#Padding-and-Trimming">Padding and Trimming</a></li>
+<li><a href="#Pretty-Printing">Pretty Printing</a></li>
+<li><a href="#Columnar-Formatting">Columnar Formatting</a></li>
+<li><a href="#Formatting-with-Color">Formatting with Color</a></li>
+<li><a href="#Unicode">Unicode</a></li>
+<li><a href="#Higher-Order-Formatters-and-State">Higher Order Formatters and State</a></li>
+<li><a href="#State-Variables">State Variables</a></li>
+</ul>
+<li><a href="#Implementation">Implementation</a></li>
+<li><a href="#Acknowledgements">Acknowledgements</a></li>
+<li><a href="#References">References</a></li>
+</ul>
+
+<h1><a name="Abstract">Abstract</a></h1>
+
+<p>
+  A library of procedures for formatting Scheme objects to text in
+  various ways, and for easily concatenating, composing and extending
+  these formatters efficiently without resorting to capturing and
+  manipulating intermediate strings.
+
+  This SRFI is an updated version of SRFI 159, primarily with the
+  difference that state variables are hygienic.
+
+<h1><a name="Rationale">Rationale</a></h1>
+
+<p>
+  There are several approaches to text formatting. Concatenating
+  strings to display is not acceptable, since it doesn't scale to very
+  large output. The simplest realistic idea, and what people resort to
+  in typical portable Scheme, is to interleave display and write and
+  manual loops, but this is both extremely verbose and doesn't compose
+  well. A simple concept such as padding space can't be achieved
+  directly without somehow capturing intermediate output.
+
+<p>
+  The traditional approach in other languages is to use templates -
+  typically strings, though in theory any object could be used and
+  indeed Emacs's mode-line format templates allow arbitrary
+  sexps. Templates can use either escape sequences (as in C's printf
+  and Common Lisp's format) or pattern matching (as in Visual Basic's
+  Format, Perl6's form, and SQL date formats). The primary
+  disadvantage of templates is the relative difficulty (usually
+  impossibility) of extending them, their opaqueness, and the
+  unreadability that arises with complex formats. Templates are not
+  without their advantages, but they are already addressed by other
+  libraries such as SRFI 28 and SRFI 48.
+
+<p>
+  Another important aspect of formatting is state.  Common Lisp format
+  provides a "fresh-line" format spec which outputs a newline only if
+  the output stream is not already at the beginning of a line.  C++
+  iostreams allow changing the radix and floating-point precision for
+  numeric output, not just for a single value but as a persistent
+  setting for all future output.  Custom formatters which could
+  manipulate their own state would allow for many new possibilities.
+
+<p>
+  This SRFI takes a combinator approach to solving both problems.
+  Formatters are defined, which are called to produce their output as
+  needed, composed with other formatters, and refer to and update
+  arbitrary state. The primary goal of this SRFI is to have a
+  maximally expressive and extensible formatting library. The next
+  most important goal is scalability - to be able to handle
+  arbitrarily large output and not build intermediate results except
+  where necessary. The third goal is brevity and ease of use.
+
+<h1>Index</h1>
+<pre>
+<b>Base</b>
+<a href="#proc-show">show</a> <a href="#proc-each">each</a> <a href="#proc-each-in-list">each-in-list</a>
+<a href="#proc-displayed">displayed</a> <a href="#proc-written">written</a> <a href="#proc-written-shared">written-shared</a> <a href="#proc-written-simply">written-simply</a>
+<a href="#proc-escaped">escaped</a> <a href="#proc-maybe-escaped">maybe-escaped</a>
+<a href="#proc-numeric">numeric</a> <a href="#proc-numeric_2fcomma">numeric/comma</a> <a href="#proc-numeric_2fsi">numeric/si</a> <a href="#proc-numeric_2ffitted">numeric/fitted</a>
+<a href="#proc-nl">nl</a> <a href="#proc-fl">fl</a> <a href="#proc-space-to">space-to</a> <a href="#proc-tab-to">tab-to</a> <a href="#proc-nothing">nothing</a>
+<a href="#proc-joined">joined</a> <a href="#proc-joined_2fprefix">joined/prefix</a> <a href="#proc-joined_2fsuffix">joined/suffix</a>
+<a href="#proc-joined_2flast">joined/last</a> <a href="#proc-joined_2fdot">joined/dot</a> <a href="#proc-joined_2frange">joined/range</a>
+<a href="#proc-padded">padded</a> <a href="#proc-padded_2fright">padded/right</a> <a href="#proc-padded_2fboth">padded/both</a>
+<a href="#proc-trimmed">trimmed</a> <a href="#proc-trimmed_2fright">trimmed/right</a> <a href="#proc-trimmed_2fboth">trimmed/both</a>
+<a href="#proc-trimmed_2flazy">trimmed/lazy</a> <a href="#proc-fitted">fitted</a> <a href="#proc-fitted_2fright">fitted/right</a> <a href="#proc-fitted_2fboth">fitted/both</a>
+<a href="#proc-fn">fn</a> <a href="#proc-with">with</a> <a href="#proc-with!">with!</a> <a href="#proc-forked">forked</a> <a href="#proc-call-with-output">call-with-output</a>
+<a href="#proc-port">port</a> <a href="#proc-row">row</a> <a href="#proc-col">col</a> <a href="#proc-width">width</a> <a href="#proc-output">output</a> <a href="#proc-writer">writer</a>
+<a href="#proc-string-width">string-width</a> <a href="#proc-pad-char">pad-char</a> <a href="#proc-ellipsis">ellipsis</a>
+<a href="#proc-radix">radix</a> <a href="#proc-precision">precision</a> <a href="#proc-decimal-sep">decimal-sep</a> <a href="#proc-decimal-align">decimal-align</a>
+<b>Pretty</b>
+<a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simple">pretty-simple</a> <a href="#proc-pretty-color">pretty-color</a>
+<b>Columnar</b>
+<a href="#proc-columnar">columnar</a> <a href="#proc-tabular">tabular</a> <a href="#proc-wrapped">wrapped</a> <a href="#proc-wrapped/list">wrapped/list</a> <a href="#proc-wrapped_2fchar">wrapped/char</a>
+<a href="#proc-justified">justified</a> <a href="#proc-from-file">from-file</a> <a href="#proc-line-numbers">line-numbers</a>
+<b>Unicode</b>
+<a href="#proc-as-unicode">as-unicode</a> <a href="#proc-unicode-terminal-width">unicode-terminal-width</a>
+<a href="#proc-upcased">upcased</a> <a href="#proc-downcased">downcased</a>
+<b>Color</b>
+<a href="#proc-as-red">as-red</a> <a href="#proc-as-blue">as-blue</a> <a href="#proc-as-green">as-green</a> <a href="#proc-as-cyan">as-cyan</a> <a href="#proc-as-yellow">as-yellow</a>
+<a href="#proc-as-magenta">as-magenta</a> <a href="#proc-as-white">as-white</a> <a href="#proc-as-black">as-black</a> <a href="#proc-as-bold">as-bold</a> <a href="#proc-as-underline">as-underline</a>
+<a href="#proc-as-color">as-color</a>
+</pre>
+
+<h1><a name="Types-and-Naming-Conventions">Types and Naming Conventions</a></h1>
+
+<p>
+  We introduce two new types, <code>formatters</code>, which are
+  disjoint from any type except possibly procedures, and <code>state
+  variables</code>, which are distinct from any type except possibly
+  SRFI 39 parameters.  These may optionally be identical to the SRFI 165
+  computations and computation environment variables, respectively.
+
+<p>
+  In the prototypes below the following naming conventions imply type
+  restrictions:
+
+<ul>
+<li><var>fmt</var>: either a formatter, or a string or char coerced to a formatter with <code>displayed</code>
+<li><var>formatter</var>: a formatter
+<li><var>mapper</var>: a procedure of one argument which returns a formatter
+<li><var>num</var>: a number
+<li><var>state-var</var>: a state variable
+
+<p>
+  The naming of formatters and mappers is generally chosen such that
+  they read as adjectives or adverbs describing how the objects they
+  act on are formatted.  This provides a natural reading of the code,
+  and allows for a simple mapping between standard operations and
+  their formatting counterparts:
+
+<li><code>write</code>: <code>written</code>
+<li><code>display</code>: <code>displayed</code>
+<li><code>string-pad</code>: <code>padded</code>
+<li><code>string-trim</code>: <code>trimmed</code>
+<li><code>string-join</code>: <code>joined</code>
+
+</ul>
+<h1><a name="Specification">Specification</a></h1>
+
+<p>
+The SRFI is divided into a core implementation and three utility
+libraries, which could be defined portably in terms of the core but
+are provided as convenience extensions.  The libraries are as follows:
+
+<pre>
+  (srfi 166)           ; composite of all of the following
+  (srfi 166 base)      ; all bindings not in one of the following
+  (srfi 166 pretty)    ; all bindings in <a href="#Pretty-Printing">Pretty Printing</a>
+  (srfi 166 columnar)  ; all bindings in <a href="#Columnar-Formatting">Columnar Formatting</a>
+  (srfi 166 unicode)   ; all bindings in <a href="#Unicode">Unicode</a>
+  (srfi 166 color)     ; all bindings in <a href="#Formatting-with-Color">Formatting with Color</a>
+</pre>
+
+
+<h2><a name="Usage">Usage</a></h2>
+
+<dl>
+<dt>(<a name="proc-show"><code class="proc-def">show</code></a> <var>output-dest</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+
+<p>
+  The entry point for all formatting.  Applies the <var>fmt</var> formatters in
+  sequence, accumulating the output to <var>output-dest</var>.  As with SRFI
+  28 <code>format</code>, <var>output-dest</var> can be an output port, <code>#t</code> to
+  indicate the current output port, or <code>#f</code> to accumulate the
+  output into a string and return that as the result of <code>show</code>.
+
+<p>
+  Each <var>fmt</var> should be a formatter as discussed below.  As a
+  convenience, non-formatter arguments are also allowed and are
+  formatted as if wrapped with <code>displayed</code>, described below, so
+  that
+
+<pre class="code-example">
+    (show #f "π = " (with ((precision 2)) (acos -1)) nl)
+</pre>
+
+  would return the string <code>"π = 3.14\n"</code>.
+
+<p>
+  As mentioned, formatters are an opaque type and cannot directly be
+  applied outside of <code>show</code>.  Custom formatters are built on the
+  existing formatters, and as first class objects may be named or
+  computed dynamically, so that:
+
+<pre class="code-example">
+  (let ((~.2f (lambda (x) (with ((precision 2)) x))))
+    (show #f "π = " (~.2f (acos -1)) nl))
+</pre>
+
+  produces the same result.  For typical uses you only need to combine
+  the existing high level formatters described in the succeeding
+  sections, but see the section <a href="#Higher-Order-Formatters-and-State">Higher Order Formatters and State</a>
+  for control flow and state manipulation primitives.
+
+<p>
+  The return value of <code>show</code> is the accumulated string if
+  <var>output-dest</var> is <code>#f</code> and unspecified otherwise.
+</dd>
+
+
+<h2><a name="Formatting-Objects">Formatting Objects</a></h2>
+
+<dl>
+<dt>(<a name="proc-displayed"><code class="proc-def">displayed</code></a> <var>obj</var>)
+<dd class="proc-def">
+
+<p>
+  If <var>obj</var> is a formatter, returns <var>obj</var> as is.
+  Otherwise, outputs <var>obj</var> using <code>display</code> semantics.
+  Specifically, strings are output as if by <code>write-string</code> and
+  characters are written as if by <code>write-char</code>.  Other objects
+  are output as with <code>written</code> (including nested strings and chars
+  inside <var>obj</var>). This is the default behavior for top-level formats
+  in <code>show</code>, <code>each</code> and most other high-level formatters.
+</dd>
+
+<dl>
+<dt>(<a name="proc-written"><code class="proc-def">written</code></a> <var>obj</var>)
+<dd class="proc-def">
+
+<p>
+  Outputs <var>obj</var> using <code>write</code> semantics.  Uses the current
+  <code>numeric</code> formatting settings to the extent that the written
+  result can still
+  be passed to <code>read</code>, possibly with loss of precision.
+  Specifically,
+  the current <var>radix</var> is used if set to any of 2, 8, 10 or 16, and the
+  fixed point <var>precision</var> is used if specified and the
+  <var>radix</var> is 10.
+<pre class="code-example">
+(show #f (written (cons 0 1)))
+=&gt; "(0 . 1)"
+</pre>
+
+<pre class="code-example">
+(show #f 1.5 " " (with ((precision 0)) 1.5))
+=&gt; "1.5 2"
+</pre>
+
+<pre class="code-example">
+(show #f 1/7 " " (with ((precision 3)) 1/7)
+             " " (with ((precision 20)) 1/7))
+=&gt; "1/7 0.143 0.14285714285714285714"
+</pre>
+
+<p>
+  Implementations should allow arbitrary precision for exact rational
+  numbers.  For example:
+
+<pre class="code-example">
+(show #f (with ((precision 50)) 1/3))
+=&gt; "0.33333333333333333333333333333333333333333333333333"
+</pre>
+
+<p>
+  As a less obvious example, using <code>string-segment</code> from
+  SRFI 152, the following code returns the first 100 Fibonacci
+  numbers:
+
+<pre class="code-example">
+(map string-&gt;number
+     (string-segment
+      (show #f (with ((precision 2500))
+                 (/ 1000 (- #e1e50 #e1e25 1))))
+      25))
+</pre>
+
+<p>
+  If you don't know the type of an object and want to print it out
+  for debugging purposes, you should always wrap it with <code>written</code>
+  or one of its variants, in case the object is itself a formatter.
+  Note for debugging specifically a convenient idiom is to wrap the
+  object(s) in a quasiquote list:
+
+<pre class="code-example">
+(define (add x y)
+  (show #t `(add x: ,x y: ,y) nl)
+  (+ x y))
+</pre>
+</dd>
+
+<dt>(<a name="proc-written-shared"><code class="proc-def">written-shared</code></a> <var>obj</var>)
+<dd class="proc-def">
+
+<p>
+  Like <code>written</code>, but using data labels for shared structures among all pairs
+  and vectors, analogous to <code>write-shared</code>.
+</dd>
+
+<dt>(<a name="proc-written-simply"><code class="proc-def">written-simply</code></a> <var>obj</var>)
+<dd class="proc-def">
+
+<p>
+  Like <code>written</code>, but doesn't handle shared structures, analogous to
+  <code>write-simply</code>.  Infinite loops can still be avoided if
+  used inside a formatter that truncates data (see
+  <code>trimmed-lazy</code> below).
+</dd>
+
+<dl>
+<dt>(<a name="proc-escaped"><code class="proc-def">escaped</code></a> <var>str</var> <var>[quote-ch</var> <var>esc-ch</var> <var>renamer]</var>)
+<dd class="proc-def">
+<p>
+  Outputs the string <var>str</var>, escaping any quote or escape characters.
+  If <var>esc-ch</var>, which defaults to <code>#\\</code>, is <code>#f</code>,
+  escapes only the <var>quote-ch</var>, which defaults to <code>#\"</code>,
+  by doubling it, as in SQL strings and CSV values.  If <var>renamer</var> is
+  provided, it should be a procedure of one character which maps that
+  character to its escape value, e.g. <code>#\newline =&gt; #\n</code>,
+  or <code>#f</code> if there is no escape value.
+
+<pre class="code-example">
+(show #f (escaped "hi, bob!"))
+=&gt; "hi, bob!"
+
+(show #f (escaped "hi, \"bob!\""))
+=&gt; "hi, \"bob!\""
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-maybe-escaped"><code class="proc-def">maybe-escaped</code></a> <var>str</var> <var>pred</var> <var>[quote-ch</var> <var>esc-ch</var> <var>renamer]</var>)
+<dd class="proc-def">
+<p>
+  Like <code>escaped</code>, but first checks if any quoting is required (by
+  the existence of either any quote or escape characters, or any
+  character matching <code>pred</code>), and if so outputs the string in
+  quotes and with escapes.  Otherwise outputs the string as is.  This
+  is useful for quoting symbols and CSV output, etc.
+
+<pre class="code-example">
+(show #f (maybe-escaped "foo" char-whitespace? #\"))
+=&gt; "foo"
+</pre>
+
+<pre class="code-example">
+(show #f (maybe-escaped "foo bar" char-whitespace? #\"))
+=&gt; "\"foo bar\""
+</pre>
+
+<pre class="code-example">
+(show #f (maybe-escaped "foo\"bar\"baz" char-whitespace? #\"))
+=&gt; "\"foo\"bar\"baz\""
+</pre>
+</dd>
+
+
+<h2><a name="Formatting-Numbers">Formatting Numbers</a></h2>
+
+<dl>
+<dt>(<a name="proc-numeric"><code class="proc-def">numeric</code></a> <var>num</var> <var>[radix</var> <var>precision</var> <var>sign-rule</var> <var>comma-rule</var> <var>comma-sep</var> <var>decimal-sep]</var>)
+<dd class="proc-def">
+<p>
+  Formats a single number <var>num</var>.  You can optionally specify any <var>radix</var>
+  from 2 to 36 (even if <var>num</var> isn't an integer).  <var>precision</var> forces a
+  fixed-point format.
+
+<p>
+  A <var>sign-rule</var> of <code>#t</code> indicates to output a plus sign (+) for
+  positive integers.  However, if <var>sign</var> is a pair of two strings, it
+  means to wrap negative numbers with the two strings.  For example,
+  <code>("(" . ")")</code> prints negative numbers in parentheses, financial
+  style: <code>-1.99 =&gt; (1.99)</code>.
+
+<p>
+  <var>comma-rule</var> is an integer specifying the number of digits
+  between commas, or a list of integers representing the number of
+  digits between each successive comma, with the first being the least
+  significant digits and the last repeating.
+
+<p>
+  <var>comma-sep</var> is the character to use for commas, defaulting to
+  <code>#\,</code>.
+
+<p>
+  <var>decimal-sep</var> is the character to use for decimals, defaulting
+  to <code>#\.</code>, or to <code>#\,</code> (European style) if <var>comma-sep</var> is
+  already <code>#\.</code>.
+
+<p>
+  These parameters may seem unwieldy, but they can also take their
+  defaults from state variables, described below, if any are
+  <code>#f</code> or omitted.
+</dd>
+
+<dl>
+<dt>(<a name="proc-numeric/comma"><code class="proc-def">numeric/comma</code></a> <var>num</var> <var>[commma-rule</var> <var>radix</var> <var>precision</var> <var>sign-rule]</var>)
+<dd class="proc-def">
+<p>
+  Shortcut for <code>numeric</code> to print with commas.
+
+<pre class="code-example">
+(show #f (numeric/comma 123456789))
+=&gt; "123,456,789"
+
+(show #f (numeric/comma 123456789 2))
+=&gt; "1,23,45,67,89"
+
+(show #f (numeric/comma 123456789 '(3 2)))
+=&gt; "12,34,56,789"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-numeric/si"><code class="proc-def">numeric/si</code></a> <var>num</var> <var>[base</var> <var>separator]</var>)
+<dd class="proc-def">
+<p>
+  Abbreviates <var>num</var> with an SI suffix as in the -h or --si
+  option to many GNU commands.  The base defaults to 1024, using
+  suffix names like Ki, Mi, Gi, etc.  All other bases (e.g. the standard
+  1000) have the suffixes k, M, G, etc.  If <var>separator</var> is
+  provided, it is inserted after the number, before any suffix.
+
+<pre class="code-example">
+(show #f (numeric/si 608))
+=&gt; "608"
+</pre>
+
+<pre class="code-example">
+(show #f (numeric/si 608) "B")
+=&gt; "608B"
+</pre>
+
+<pre class="code-example">
+(show #f (numeric/si 608 1000 " ") "B")
+=&gt; "608 B"
+</pre>
+
+<pre class="code-example">
+(show #f (numeric/si 3986))
+=&gt; "3.9Ki"
+</pre>
+
+<pre class="code-example">
+(show #f (numeric/si 3986 1000) "B")
+=&gt; "4kB"
+</pre>
+
+<pre class="code-example">
+(show #f (numeric/si 1.23e-6 1000) "m")
+=&gt; "1.2µm"
+</pre>
+
+<pre class="code-example">
+(show #f (numeric/si 1.23e-6 1000 " ") "m")
+=&gt; "1.2 µm"
+</pre>
+
+<p>
+  See <a href="https://en.wikipedia.org/wiki/Metric_prefix">https://en.wikipedia.org/wiki/Metric_prefix</a> for the complete
+  list of abbreviations.
+</dd>
+
+<dl>
+<dt>(<a name="proc-numeric/fitted"><code class="proc-def">numeric/fitted</code></a> <var>width</var> <var>n</var> <var>.</var> <var>args</var>)
+<dd class="proc-def">
+<p>
+  Like <code>numeric</code>, but if the result doesn't fit in
+  <var>width</var> using the current <code>precision</code>, output
+  instead a string of hashes rather than showing an incorrectly
+  truncated number.  For example
+
+<pre class="code-example">
+(show #f (with ((precision 2)) (numeric/fitted 4 1.25)))
+=&gt; "1.25"
+</pre>
+
+<pre class="code-example">
+(show #f (with ((precision 2)) (numeric/fitted 4 12.345)))
+=&gt; "#.##"
+
+<pre class="code-example">
+(show #f (with ((precision 0)) (numeric/fitted 2 123.45)))
+=&gt; "##"
+</pre>
+</dd>
+
+
+<h2><a name="Formatting-Space">Formatting Space</a></h2>
+
+<dl>
+<dt><a name="proc-nl"><code class="proc-def">nl</code></a> 
+<dd class="proc-def">
+<p>
+  Outputs a newline.
+
+<pre class="code-example">
+(show #f nl)
+=&gt; "\n"
+</pre>
+</dd>
+
+
+<dt><a name="proc-fl"><code class="proc-def">fl</code></a> 
+<dd class="proc-def">
+<p>
+  Short for "fresh line," outputs a newline only if we're not already
+  at the start of a line.
+
+<pre class="code-example">
+(show #f fl)
+=&gt; ""
+</pre>
+
+
+<pre class="code-example">
+(show #f "hi" fl)
+=&gt; "hi\n"
+</pre>
+
+
+<pre class="code-example">
+(show #f "hi" nl fl)
+=&gt; "hi\n"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-space-to"><code class="proc-def">space-to</code></a> <var>column</var>)
+<dd class="proc-def">
+<p>
+  Outputs spaces up to the given <var>column</var>.  If the current column is
+  already &gt;= <var>column</var>, does nothing.  The character used for spacing
+  is the current value of <var>pad-char</var>, described below, which defaults
+  to space.  Columns are zero-based.
+
+<pre class="code-example">
+(show #f "a" (space-to 5) "b")
+=&gt; "a    b"
+</pre>
+
+<pre class="code-example">
+(show #f "a" (space-to 0) "b")
+=&gt; "ab"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-tab-to"><code class="proc-def">tab-to</code></a> <var>[tab-width]</var>)
+<dd class="proc-def">
+<p>
+  Outputs spaces up to the next tab stop, using tab stops of width
+  <var>tab-width</var>, which defaults to 8.  If already on a tab stop,
+  does nothing.  If you want to ensure you always tab at least one
+  space, you can use <code>(each " " (tab-to width))</code>.  Columns
+  are zero-based.
+
+<pre class="code-example">
+(show #f (tab-to 5) "b")
+=&gt; "b"
+</pre>
+
+<pre class="code-example">
+(show #f "a" (tab-to 5) "b")
+=&gt; "a    b"
+</pre>
+
+<pre class="code-example">
+(show #f "abcdefghi" (tab-to 5) "b")
+=&gt; "abcdefghi b"
+</pre>
+</dd>
+
+
+<dt><a name="proc-nothing"><code class="proc-def">nothing</code></a> 
+<dd class="proc-def">
+<p>
+  Outputs nothing (useful in combinators and as a default noop in
+  conditionals).
+
+<pre class="code-example">
+(show #f "a" nothing "b")
+=&gt; "ab"
+</pre>
+</dd>
+
+
+<h2><a name="Concatenation">Concatenation</a></h2>
+
+<dl>
+<dt>(<a name="proc-each"><code class="proc-def">each</code></a> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Applies each <var>fmt</var> in sequence, as in the top-level of show.
+
+<pre class="code-example">
+(show #f (each "a" "b"))
+=&gt; "ab"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-each-in-list"><code class="proc-def">each-in-list</code></a> <var>list-of-fmts</var>)
+<dd class="proc-def">
+<p>
+  Equivalent to <code>(apply each list-of-fmts)</code> but may be more efficient.
+</dd>
+
+<dl>
+<dt>(<a name="proc-joined"><code class="proc-def">joined</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
+<dd class="proc-def">
+<p>
+  Formats each element <var>elt</var> of <var>list</var> with <code>(mapper elt)</code>,
+  inserting <var>sep</var> in between.  <var>sep</var> defaults to the empty string, but
+  can be any format or string.
+
+<pre class="code-example">
+(show #f (joined displayed '(a b c) ", "))
+=&gt; "a, b, c"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-joined/prefix"><code class="proc-def">joined/prefix</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-joined/suffix"><code class="proc-def">joined/suffix</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
+<dd class="proc-def">
+<pre class="code-example">
+(show #f (joined/prefix displayed '(usr local bin) "/"))
+=&gt; "/usr/local/bin"
+</pre>
+
+<pre class="code-example">
+(show #f (joined/suffix displayed '(1 2 3) nl))
+=&gt; "1\n2\n3\n"
+</pre>
+
+  Like <code>joined</code>, but inserts <var>sep</var> before/after every element.
+</dd>
+
+<dt>(<a name="proc-joined/last"><code class="proc-def">joined/last</code></a> <var>mapper</var> <var>last-mapper</var> <var>list</var> <var>[sep]</var>)
+<dd class="proc-def">
+<p>
+  Like <code>joined</code>, but the last element of the list is formatted with
+  <var>last-mapper</var> instead.
+
+<pre class="code-example">
+(show #f (joined/last displayed
+                      (lambda (last) (each "and " last))
+                      '(lions tigers bears)
+                      ", "))
+=&gt; "lions, tigers, and bears"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-joined/dot"><code class="proc-def">joined/dot</code></a> <var>mapper</var> <var>dot-mapper</var> <var>list</var> <var>[sep]</var>)
+<dd class="proc-def">
+<p>
+  Like <code>joined</code>, but if the list is a dotted list, then formats the
+  dotted value with <var>dot-mapper</var> instead.
+
+<pre class="code-example">
+(show #f
+      "("
+      (joined/dot displayed
+		  (lambda (dot) (each ". " dot))
+		  '(1 2 . 3)
+		  " ")
+      ")")
+=&gt; "(1 2 . 3)"
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-joined/range"><code class="proc-def">joined/range</code></a> <var>mapper</var> <var>start</var> <var>[end</var> <var>sep]</var>)
+<dd class="proc-def">
+<p>
+  Like <code>joined</code>, but counts from <var>start</var> (inclusive) to <var>end</var>
+  (exclusive), formatting each integer in the range with <var>mapper</var>.  If
+  <var>end</var> is <code>#f</code> or unspecified, produces an infinite stream of
+  output.
+
+<pre class="code-example">
+(show #f (joined/range displayed 0 5 " "))
+=&gt; "0 1 2 3 4"
+</pre>
+</dd>
+
+
+<h2><a name="Padding-and-Trimming">Padding and Trimming</a></h2>
+
+<dl>
+<dt>(<a name="proc-padded"><code class="proc-def">padded</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<dt>(<a name="proc-padded/right"><code class="proc-def">padded/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<dt>(<a name="proc-padded/both"><code class="proc-def">padded/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Analogs of SRFI-13 <code>string-pad</code>, these add extra space to the
+  left, right or both sides of the output generated by the <var>fmt</var>s
+  to pad it to <var>width</var>.  If <var>width</var> is exceeded, has no effect.
+  <code>padded/both</code> will include one more extra space on the right
+  side of the output if the difference is odd.
+
+<p>
+  <code>padded/right</code> is guaranteed not to accumulate any intermediate
+  data.
+
+<p>
+  The padding can be controlled with the <code>pad-char</code> state
+  variable described below, defaulting to space.
+
+<p>
+  Note these are column-oriented padders, so won't necessarily work
+  with multi-line output (padding doesn't seem a likely operation for
+  multi-line output).
+
+<pre class="code-example">
+(show #f (padded 5 "abc"))
+=&gt; "  abc"
+</pre>
+
+
+<pre class="code-example">
+(show #f (padded/right 5 "abc"))
+=&gt; "abc  "
+</pre>
+
+
+<pre class="code-example">
+(show #f (padded/both 5 "abc"))
+=&gt; " abc "
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-trimmed"><code class="proc-def">trimmed</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<dt>(<a name="proc-trimmed/right"><code class="proc-def">trimmed/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<dt>(<a name="proc-trimmed/both"><code class="proc-def">trimmed/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Analogs of SRFI-13 <code>string-trim</code>, truncates the output of the
+  <var>fmt</var>s to force it in under <var>width</var> columns.  As soon as any of
+  the <var>fmt</var>s exceed <var>width</var>, stop formatting and truncate the
+  result, returning control to whoever called <var>trimmed</var>.  If <var>width</var>
+  is not exceeded, is equivalent to <code>each</code>.  Note this implies
+  that in the presense of zero width characters such as
+  combining characters in <code>as-unicode</code>, the longest output that
+  does not exceed <var>width</var> should be taken.
+
+<p>
+  If a truncation <var>ellipsis</var> is set, then when any truncation occurs
+  <code>trimmed</code> and <code>trimmed/right</code> will prepend and append the
+  ellipsis, respectively.  <code>trimmed/both</code> will both prepend and
+  append.  The length of the <var>ellipsis</var> will be considered when
+  truncating the original string, so that the total width will never
+  be longer than <var>width</var>.  It is an error if <var>width</var> is
+  less than the length of <var>ellipsis</var>, or double the length for /both.
+
+<pre class="code-example">
+(show #f (with ((ellipsis "...")) (trimmed 5 "abcde")))
+=&gt;  "abcde"
+</pre>
+
+<pre class="code-example">
+(show #f (with ((ellipses "...")) (trimmed 5 "abcdef")))
+=&gt;  "ab..."
+</pre>
+
+  It is an error if <var>width</var> is shorter than the width of the
+  <var>ellipsis</var>.
+</dd>
+
+<p>
+<dt>(<a name="proc-trimmed/lazy"><code class="proc-def">trimmed/lazy</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  A variant of <code>trimmed</code> which generates each <var>fmt</var> in
+  left to right order, and truncates and terminates
+  immediately if more than <var>width</var> characters are generated.
+  Thus this is safe to use with an infinite amount of output,
+  e.g. from <code>written-simply</code> on an infinite list.
+</dd>
+
+<dl>
+<dt>(<a name="proc-fitted"><code class="proc-def">fitted</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<dt>(<a name="proc-fitted/right"><code class="proc-def">fitted/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<dt>(<a name="proc-fitted/both"><code class="proc-def">fitted/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  A combination of <code>padded</code> and <code>trimmed</code>, ensures the output
+  width is exactly <var>width</var>, truncating if it goes over and padding if
+  it goes under.
+</dd>
+
+<h2><a name="Pretty-Printinf">Pretty Printing</a></h2>
+
+The homoiconic nature of Lisp makes pretty printing an indispensable
+utility for presenting code in a readable format.
+
+<dl>
+<dt>(<a name="proc-pretty"><code class="proc-def">pretty</code></a> <var>obj</var>)
+<dd class="proc-def">
+<p>
+  Pretty-prints <var>obj</var>.  The result should be identical to
+  <code>written</code> except possibly for differences in whitespace to make
+  the output resemble formatted source code.  Implementations should
+  print vectors and data lists (lists that don't begin with a (nested)
+  symbol) in a tabular format when possible to reduce vertical space.
+
+  Like <codde>written</code>, cyclic structure must be detected and
+  represented with datum labels.
+</dd>
+
+<dl>
+<dt>(<a name="proc-pretty-shared"><code class="proc-def">pretty-shared</code></a> <var>obj</var>)
+<dd class="proc-def">
+<p>
+  The same as <code>pretty</code> but using data labels for shared structures among all pairs
+  and vectors, analogous to <code>write-shared</code>.
+</dd>
+
+<dl>
+<dt>(<a name="proc-pretty-simple"><code class="proc-def">pretty-simple</code></a> <var>obj</var>)
+<dd class="proc-def">
+<p>
+  The same as <code>pretty</code>, but without using any datum labels.
+</dd>
+
+<dl>
+<dt>(<a name="proc-pretty-color"><code class="proc-def">pretty-color</code></a> <var>obj</var>)
+<dd class="proc-def">
+<p>
+  Equivalent to <code>pretty</code>, but may optionally include ANSI escape
+  sequences (as in <a href="#Formatting-with-Color">Formatting with Color</a>
+  below) to provide syntax-highlighting.  In such a case, the raw output
+  may not be directly parseable with <code>read</code>.
+</dd>
+
+<h2><a name="Columnar-Formatting">Columnar Formatting</a></h2>
+
+The following procedures are provided in the <code>(srfi 166 columnar)</code>
+library.
+
+<p>
+  Although <code>tab-to</code>, <code>space-to</code> and padding/trimming can be
+  used to manually align columns to produce table-like output, these
+  can be tedious to use.  The optional extensions in this section make
+  this easier.
+
+<dl>
+<dt>(<a name="proc-columnar"><code class="proc-def">columnar</code></a> <var>column</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Formats each <var>column</var> side-by-side, i.e. as though each were
+  formatted separately and then the individual lines concatenated
+  together.  The current line width (from the <var>width</var> state
+  variable) is divided evenly among the columns, and all but the last
+  column are right-padded.  For example
+
+<pre class="code-example">
+(show #t (columnar (displayed "abc\ndef\n")
+                   (displayed "123\n456\n")))
+</pre>
+
+  outputs
+
+<pre class="output-example">
+abc     123
+def     456
+</pre>
+
+  assuming a 16-char width (the left side gets half the width, or 8
+  spaces, and is left aligned).  Note that we explicitly use
+  <code>displayed</code> instead of the strings directly.  This is because
+  <code>columnar</code> treats raw strings as literals inserted into the
+  given location on every line, to be used as borders, for example:
+
+<pre class="code-example">
+(show #t (columnar "/* " (displayed "abc\ndef\n")
+                   " | " (displayed "123\n456\n")
+                   " */"))
+</pre>
+
+  would output
+
+<pre class="output-example">
+/* abc | 123 */
+/* def | 456 */
+</pre>
+
+  You may also prefix any column with any of the symbols <var>'left</var>,
+  <var>'right</var> or <var>'center</var> to control the justification.  The symbol
+  <var>'infinite</var> can be used to indicate the column generates an infinite
+  stream of output.
+
+<p>
+  You can further prefix any column with a width modifier.  Any
+  positive integer is treated as a fixed width, ignoring the available
+  width.  Any real number between 0 and 1 indicates a fraction of the
+  available width (after subtracting out any fixed widths).  Columns
+  with unspecified width divide up the remaining width evenly.  If the
+  extra space does not divide evenly, it is allocated column-wise left
+  to right, e.g. if the width of 78 is divided among 5 columns, the
+  column widths become 16, 16, 16, 15, 15 in order.
+
+<p>
+  The value of the <var>col</var> state variable is reset to 0 at
+  the start of each line for each formatter (i.e. they each format
+  as though they were the only column).
+
+<p>
+  Note that <code>columnar</code> builds its output incrementally,
+  interleaving calls to the generators until each has produced a line,
+  then concatenating that line together and outputting it.  This is
+  important because as noted above, some columns may produce an
+  infinite stream of output, and in general you may want to format
+  data larger than can fit into memory.  Thus columnar would be
+  suitable for line numbering a file of arbitrary size, or
+  implementing the Unix <code>yes(1)</code> command, etc.
+</dd>
+
+<dl>
+<dt>(<a name="proc-tabular"><code class="proc-def">tabular</code></a> <var>column</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Equivalent to <code>columnar</code> except that each column is padded at
+  least to the minimum width required on any of its lines.  Thus
+
+<pre class="code-example">
+(show #t (tabular "|" (each "a\nbc\ndef\n") "|"
+                      (each "123\n45\n6\n") "|"))
+</pre>
+
+  outputs
+
+<pre class="output-example">
+|a  |123|
+|bc |45 |
+|def|6  |
+</pre>
+
+  This makes it easier to generate tables without knowing widths in
+  advance.  However, because it requires generating the entire output
+  in advance to determine the correct column widths, <code>tabular</code>
+  cannot format a table larger than would fit in memory.
+</dd>
+
+<p>
+<dt>(<a name="proc-wrapped"><code class="proc-def">wrapped</code></a> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Behaves like <code>each</code>, except text is accumulated and lines are
+  wrapped to fit in the current <var>width</var> as in the Unix <code>fmt(1)</code>
+  command.  Specifically, words are tokenized by splitting on all
+  characters which satisfy the predicate in the parameter
+  <var>word-separator?</var>, which defaults to <code>char-whitespace?</code>.
+  Words are grouped into lines separating them by space, and line
+  breaks are introduced to minimize the
+  sum of the cube of trailing whitespace on every line.
+</dd>
+
+<dl>
+<dt>(<a name="proc-wrapped/list"><code class="proc-def">wrapped/list</code></a> <var>list-of-strings</var>)
+<dd class="proc-def">
+<p>
+  Like wrapped, but taking a pre-tokenized list of strings.
+</dd>
+
+<dl>
+<dt>(<a name="proc-wrapped/char"><code class="proc-def">wrapped/char</code></a> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Like <code>wrapped</code>, but splits simply on individual characters exactly
+  as the current <var>width</var> is reached on each line.  Thus there is
+  nothing to optimize and this formatter doesn't buffer output.
+</dd>
+
+<dl>
+<dt>(<a name="proc-justified"><code class="proc-def">justified</code></a> <var>&lt;format&gt;</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Like <code>wrapped</code> except the lines are full-justified.
+
+<pre class="code-example">
+(define func
+  '(define (fold kons knil ls)
+     (let lp ((ls ls) (acc knil))
+       (if (null? ls) acc (lp (cdr ls) (kons (car ls) acc))))))
+
+(define doc
+  (string-append
+    "The fundamental list iterator.  Applies KONS to each "
+    "element of LS and the result of the previous application, "
+    "beginning with KNIL.  With KONS as CONS and KNIL as '(), "
+    "equivalent to REVERSE."))
+
+(show #t (columnar (pretty func) " ; " (justified doc)))
+</pre>
+
+  outputs
+
+<pre class="output-example">
+(define (fold kons knil ls)          ; The   fundamental   list   iterator.
+  (let lp ((ls ls) (acc knil))       ; Applies  KONS  to  each  element  of
+    (if (null? ls)                   ; LS  and  the  result of the previous
+        acc                          ; application,  beginning  with  KNIL.
+        (lp (cdr ls)                 ; With  KONS  as CONS and KNIL as '(),
+            (kons (car ls) acc)))))  ; equivalent to REVERSE.
+</pre>
+</dd>
+
+
+<dt>(<a name="proc-from-file"><code class="proc-def">from-file</code></a> <var>pathname</var>)
+<dd class="proc-def">
+<p>
+  Displays the contents of the file <var>pathname</var> one line at a time, so
+  that in typical formatters such as <code>columnar</code> only constant
+  memory is consumed, making this suitable for formatting files of
+  arbitrary size.
+</dd>
+
+<dl>
+<dt>(<a name="proc-line-numbers"><code class="proc-def">line-numbers</code></a> <var>[start]</var>)
+<dd class="proc-def">
+<p>
+  A convenience utility, just formats an infinite stream of numbers (in
+  the current radix) beginning with <var>start</var>, which defaults to 1.
+
+<p>
+  The Unix <code>nl(1)</code> utility could be implemented as:
+
+<pre class="code-example">
+(show #t (columnar 4 'right 'infinite (line-numbers)
+                   " " (from-file "read-line.scm")))
+</pre>
+
+which might output:
+
+<pre class="output-example">
+   1 
+   2 (define (read-line . o)
+   3   (let ((port (if (pair? o) (car o) (current-input-port))))
+   4     (let lp ((res '()))
+   5       (let ((c (read-char port)))
+   6         (if (or (eof-object? c) (eqv? c #\newline))
+   7             (list-&gt;string (reverse res))
+   8             (lp (cons c res)))))))
+</pre>
+</dd>
+
+
+<h2><a name="Formatting-with-Color">Formatting with Color</a></h2>
+
+The following procedures are provided in the <code>(srfi 166 color)</code> library.
+
+<dl>
+<dt>(<a name="proc-as-red"><code class="proc-def">as-red</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-as-blue"><code class="proc-def">as-blue</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-green"><code class="proc-def">as-green</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-cyan"><code class="proc-def">as-cyan</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-yellow"><code class="proc-def">as-yellow</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-magenta"><code class="proc-def">as-magenta</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-white"><code class="proc-def">as-white</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-black"><code class="proc-def">as-black</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-bold"><code class="proc-def">as-bold</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-underline"><code class="proc-def">as-underline</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dd class="proc-def">
+<p>
+  Outputs the formatters <var>fmt ...</var> colored or (boldened or underline) with ANSI
+  escapes, for use when formatting to a terminal.
+</dd>
+
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-as-black"><code class="proc-def">as-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
+<p>
+  Each of <var>red</var>, <var>green</var>, <var>blue</var>
+  should be an exact integer in the range <code>[0, 5]</code>,
+  representing 6 bits each of red, green and blue components
+  in an RGB color model.  Outputs the formatters colored
+  accordingly using 8-bit color ANSI escapes.
+</dd>
+
+<p>
+  It is up to the caller to ensure that the terminals support
+  colors.
+
+<h2><a name="Unicode">Unicode</a></h2>
+
+The following procedures are provided in the <code>(srfi 166 unicode)</code> library.
+
+<dl>
+<dt>(<a name="proc-as-unicode"><code class="proc-def">as-unicode</code></a> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Equivalent to
+
+<pre class="code-example">
+    (fn (ambiguous-is-wide?)
+      (with ((string-width (if ambiguous-is-wide?
+                               unicode-terminal-width/jp
+                               unicode-terminal-width)))
+        fmt ...))
+</pre>
+
+  Padding, trimming and tabbing, etc. will generally not do the right
+  thing in the presence of zero-width and double-width Unicode
+  characters.  This formatter overrides the <var>string-width</var> state var
+  used in column tracking to do the right thing in such cases,
+  considering Unicode double or full width characters as 2 characters
+  wide (as they typically are in fixed-width terminals), while
+  treating combining and non-spacing characters as 0 characters wide.
+</dd>
+
+<pre class="code-example">
+;; 3 characters padded to 5
+(show #f (with ((pad-char #\〜)) (padded/both 5 "日本語")))
+=&gt; "〜日本語〜"
+
+;; the 3 characters have a terminal width of 6 so are not padded
+(show #f (as-unicode (with ((pad-char #\〜)) (padded/both 5 "日本語"))))
+=&gt; "日本語"
+</pre>
+
+<dt>(<a name="proc-unicode-terminal-width"><code class="proc-def">unicode-terminal-width</code></a> <var>str</var>)
+<dd class="proc-def">
+<p>
+  A utility function which returns the integer number of columns <var>str</var>
+  would require in a terminal, according to the following rules:
+
+<ol>
+<li>non-spacing characters (format control characters with the property Cf, or non-spacing marks with the property Mn) count as 0 columns
+<li>characters with the East Asian Wide (W) or East Asian Fullwidth (F) properties, according to Unicode TR #11, count as 2 columns
+<li>characters with the Halfwidth (H) or Narrow (Na) should count as 1 column
+<li>characters with the Neutral (N) non-East Asian also count as 1 column
+<li>characters with the Ambiguous (A) property are 1 columns
+<li>ANSI terminal escapes, as output by the color formatters above, count as 0 columns
+<li>the tab character is implementation defined
+</ol>
+
+<p>
+  Implementations should support the properties from at least the
+  current Unicode specification at time of writing this SRFI, 12.0.0.
+</dd>
+
+<dt>(<a name="proc-unicode-terminal-width-jp"><code class="proc-def">unicode-terminal-width/jp</code></a> <var>str</var> [start end])
+<dd class="proc-def">
+<p>
+  Equivalent to <code>unicode-terminal-width</code>, except that
+  ambiguous characters are counted as 2 columns, as they are in
+  certain Japanese environments (notably kterm, fonts such as
+  MS Gothic and the system fonts of many Japanese feature phones).
+</dd>
+
+<dl>
+<dt>(<a name="proc-upcased"><code class="proc-def">upcased</code></a> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-downcased"><code class="proc-def">downcased</code></a> <var>fmt</var> <var>...</var>)
+<dd class="proc-def">
+<p>
+  Runs the formatters <var>fmt ...</var>, but with all output
+  translated as if first passed to <code>string-upcase</code> or
+  <code>string-downcase</code>, respectively.  Note these should
+  also work correctly when combined with the ANSI escapes from
+  <a href="Formatting-with-Color">formatting with color</a>,
+  which includes ASCII letters in the escapes.
+<p>
+  Note there should be no internal buffering, which may have
+  an effect on context-sensitive casing.  For example, if an
+  implementation correctly supports "ς" as the proper downcased
+  form of a Greek sigma "Σ" at the end of a word, it may assume
+  that the end of a string is in fact the end of a word, even
+  if later succeeded by a word constituent character.
+<p>
+<pre class="code-example">
+(show #f (upcased "abc"))
+=&gt; "ABC"
+
+(show #f (downcased "ΜΈΛΟΣ"))
+=&gt; "μέλος"
+
+(show #f (downcased "ΜΈΛΟΣ" "Μ"))
+=&gt; unspecified
+</pre>
+</dd>
+
+<h2><a name="Higher-Order-Formatters-and-State">Higher Order Formatters and State</a></h2>
+
+<p>
+  Formatters up to this point have been simple accumulators of output,
+  with no control flow or handling of state.  Both of these are
+  provided by <code>fn</code> and <code>with</code> for getting and setting
+  state, respectively.
+
+<p>
+  A formatter essentially implement an environment monad, although the
+  underlying implementation is unspecified.
+
+<dl>
+<dt>(<a name="proc-fn"><code class="proc-def">fn</code></a> ((<var>id</var> <var>state-var</var>) ...) <var>expr</var> ... <var>fmt</var>)
+<dd class="proc-def">
+<p>
+  Short for "function," this is the analog to <code>lambda</code>.  Returns a
+  formatter which on application evaluates each <var>expr</var> and
+  <var>fmt</var> in left-to-right order, in a lexical
+  environment extended with each identifier <var>id</var> bound to the current
+  value of the state variable evaluated by <var>state-var</var>.  The
+  result of the <var>fmt</var> is then applied as a formatter.
+
+<p>
+  As a convenience, any <code>(id state-var)</code> list may be abbreviated
+  as simply <code>id</code>, indicating <var>id</var> is bound to the state
+  variable of the same identifier.
+
+<pre class="code-example">
+(show #f "column: " (fn (col) col))
+=&gt; "column: 8"
+
+(show #f "column: " (fn ((col1 col))
+                     (each col1 ", " (fn ((col2 col)) col2))))
+=&gt; "column: 8, 11"
+</pre>
+
+<p>
+  The trivial case of no state variables is often useful to allow for
+  lazy applications of formatters, needed for conditional formatting
+  and loops.  For example:
+
+<pre class="code-example">
+(show #t (let lp ((ls ls))
+           (if (pair? ls)
+               (each (car ls) (lp (cdr ls)))
+               nothing)))
+</pre>
+
+  would eagerly create a formatter concatenating every element of ls
+  before starting to accumulate any output, whereas
+
+<pre class="code-example">
+(show #t (let lp ((ls ls))
+           (if (pair? ls)
+               (each (car ls) (fn () (lp (cdr ls))))
+               nothing)))
+</pre>
+
+  would lazily apply the formatters one at a time.
+</dd>
+
+<dt>(<a name="proc-with"><code class="proc-def">with</code></a> ((<var>state-var</var> <var>value</var>) ...) <var>fmt</var> ...)
+<dd class="proc-def">
+<p>
+  Conceptually the formatting equivalent of <code>parameterize,</code>
+  temporarily altering state variables.  Applies each of the
+  formatters <var>fmt</var> with each <var>state-var</var> bound to the corresponding
+  <var>value</var>.  The resulting state is then updated to restore each
+  <var>state-var</var> to its original value.
+</dd>
+
+<dl>
+<dt>(<a name="proc-with!"><code class="proc-def">with!</code></a> (<var>state-var</var> <var>value</var>) ...)
+<dd class="proc-def">
+<p>
+  Similar to <code>with</code> but does not restore the original values,
+  changing the value of each <var>state-var</var> for any remaining formatters
+  in a sequence.
+<p>
+   As the current formatting state can be captured or reentered with
+   continuations, <code>with!</code> should be used with caution, and
+   may produce unexpected output in cases.
+</dd>
+
+<dl>
+<dt>(<a name="proc-forked"><code class="proc-def">forked</code></a> <var>fmt1</var> <var>fmt2</var>)
+<dd class="proc-def">
+<p>
+  Calls <var>fmt1</var> on (a conceptual copy of) the current state, then
+  <var>fmt2</var> on the same original state as though <var>fmt1</var> had not been
+  called.
+</dd>
+
+<dl>
+<dt>(<a name="proc-call-with-output"><code class="proc-def">call-with-output</code></a> <var>formatter</var> <var>mapper</var>)
+<dd class="proc-def">
+<p>
+  A utility, calls <var>formatter</var> on a copy of the current state (as with
+  <code>forked</code>), accumulating the results into a string.  Then calls
+  the formatter resulting from <code>(mapper <var>result-string</var>)</code>
+  on the original state.
+</dd>
+
+<h2><a name="State-Variables">State Variables</a></h2>
+
+<dl>
+<dt>(<a name="proc-port"><code class="proc-def">make-state-variable</code></a> <var>name</var> <var>default</var>)
+<dd class="proc-def">
+<p>
+  Returns a new state variable suitable for use in
+  <code>fn</code> and <code>with</code>, etc.  The <var>name</var>
+  should be a string and is strictly for debugging purposes.
+  <var>default</var> is the default value when referenced in <code>fn</code>
+  if the value has not be set.
+</dd>
+
+<p>
+  The following state variables have predefined meanings with the
+  formatters in this SRFI.  These are all exported by the
+  <code>(srfi 166 base)</code> library.
+
+<dl>
+<dt><a name="proc-port"><code class="proc-def">port</code></a> 
+<dd class="proc-def">
+<p>
+  The textual port output is written to, this can be overridden to
+  capture intermediate output.
+</dd>
+
+<dl>
+<dt><a name="proc-row"><code class="proc-def">row</code></a> 
+<dd class="proc-def">
+<p>
+  The current row of output, starting at 0.
+</dd>
+
+<dl>
+<dt><a name="proc-col"><code class="proc-def">col</code></a> 
+<dd class="proc-def">
+<p>
+  The current column of output, used for padding and spacing, etc.,
+  starting at 0.
+</dd>
+
+<dl>
+<dt><a name="proc-width"><code class="proc-def">width</code></a> 
+<dd class="proc-def">
+<p>
+  The current line width, used for columnar, wrapping and pretty-printing.
+  The default is implementation-defined.
+</dd>
+
+<dl>
+<dt><a name="proc-output"><code class="proc-def">output</code></a> 
+<dd class="proc-def">
+<p>
+  The underlying standard formatter for writing a single string.  The
+  default value outputs the string while tracking the current <var>row</var>
+  and <var>col</var>.  This can be overridden both to capture intermediate
+  output and perform transformations on strings before outputting, but
+  should generally wrap the existing <var>output</var> to preserve expected
+  behavior.
+</dd>
+
+<dl>
+<dt><a name="proc-writer"><code class="proc-def">writer</code></a> 
+<dd class="proc-def">
+<p>
+  The mapper for automatic formatting of non-string/char values in
+  top-level <code>show</code>, <code>each</code> and other formatters.
+  Default value is implementation-defined.
+</dd>
+
+<dl>
+<dt><a name="proc-string-width"><code class="proc-def">string-width</code></a> 
+<dd class="proc-def">
+<p>
+  A procedure taking three args: <code>(string [start end])</code>,
+  where start and end are optional, defaulting to the 0 and
+  <code>(string-length string)</code> respectively.  Returns the
+  length in columns of that string within the given range.
+</dd>
+
+<dl>
+<dt><a name="proc-pad-char"><code class="proc-def">pad-char</code></a> 
+<dd class="proc-def">
+<p>
+  The character used by <code>space-to</code>, <code>tab-to</code> and other padding
+  formatters.
+
+<pre class="code-example">
+(define (print-table-of-contents alist)
+  (define (print-line x)
+    (each (car x) (space-to 72) (padded 3 (cdr x))))
+  (show #t (with ((pad-char #\.))
+             (joined/suffix print-line alist nl))))
+
+(print-table-of-contents
+ '(("An Unexpected Party" . 29)
+   ("Roast Mutton" . 60)
+   ("A Short Rest" . 87)
+   ("Over Hill and Under Hill" . 100)
+   ("Riddles in the Dark" . 115)))
+</pre>
+
+  would output
+
+<pre class="output-example">
+An Unexpected Party.....................................................29
+Roast Mutton............................................................60
+A Short Rest............................................................87
+Over Hill and Under Hill...............................................100
+Riddles in the Dark....................................................115
+</pre>
+</dd>
+
+
+<dt><a name="proc-ellipsis"><code class="proc-def">ellipsis</code></a> 
+<dd class="proc-def">
+<p>
+  The string used when truncating as described in <code>trimmed</code>,
+  default the empty string.
+</dd>
+
+<dl>
+<dt><a name="proc-radix"><code class="proc-def">radix</code></a> 
+<dd class="proc-def">
+<p>
+  The radix for numeric output, defaulting to 10, as used in
+  <code>numeric</code> and <code>written</code>.
+</dd>
+
+<dl>
+<dt><a name="proc-precision"><code class="proc-def">precision</code></a> 
+<dd class="proc-def">
+<p>
+  The precision for numeric output, as described in
+  <code>numeric</code> and <code>written</code>.  The precision
+  specifies the number of digits written after the decimal point.  If
+  the numeric value to be written out requires more digits to
+  represent it than precision, the written representation is chosen
+  which is closest to the numeric value and representable with the
+  specified precision.  If the numeric value falls on the midpoint of
+  two such representations, it is implementation dependent which
+  representation is chosen.
+
+<p>
+  When the numeric value is an inexact floating-point number, there is
+  more than one interpretation of this "rounding".  One is to take
+  the effective value the floating-point number represents (e.g. if we
+  use binary floating-point numbers, we take the value of <code>(*
+  <i>sign</i> <i>mantissa</i> (expt 2 <i>exponent</i>))</code>), and
+  compare it to the two closest numeric representations of the given
+  precision.  Another way is to obtain the default notation of the
+  floating-point number and apply rounding to it.  The former (we call
+  it effective rounding) is consistent with most floating-point number
+  operations, but may lead to a non-intuitive result than the latter (we
+  call it notational rounding).  For example, 5.015 can't be represented
+  exactly in binary floating-point numbers.  With IEEE754 floating-point
+  numbers, the floating point number closest to 5.015 is smaller than
+  exact 5.015, i.e. <code>(< 5.015 5015/1000) => #t</code>.  With
+  effective rounding with precision 2, it should result in "5.01".
+  However, users who look at the notation may be confused by "5.015"
+  not being rounded up as they usually expect.  With notational rounding
+  the implementation chooses "5.02" (if it also adopts
+  round-half-to-infinity or round-half-up rule).  It is up to the
+  implementation to choose which interpretation to adopt.
+
+</dd>
+
+<dl>
+<dt><a name="proc-decimal-sep"><code class="proc-def">decimal-sep</code></a> 
+<dd class="proc-def">
+<p>
+  The decimal separator for floating point output, default ".".
+</dd>
+
+<dl>
+<dt><a name="proc-decimal-align"><code class="proc-def">decimal-align</code></a> 
+<dd class="proc-def">
+<p>
+  Specifies an alignment for the decimal place when formatting
+  numbers, useful for outputting tables of numbers.
+
+<pre class="code-example">
+(define (print-angles x)
+  (joined numeric (list x (sin x) (cos x) (tan x)) " "))
+
+(show #t (with ((decimal-align 5) (precision 3))
+           (joined/suffix print-angles (iota 5) nl)))
+</pre>
+
+  would output
+
+<pre class="output-example">
+ 0.000    0.000    1.000    0.000
+ 1.000    0.842    0.540    1.557
+ 2.000    0.909   -0.416   -2.185
+ 3.000    0.141   -0.990   -0.142
+ 4.000   -0.757   -0.654    1.158
+</pre>
+</dd>
+
+<dt><a name="proc-sign-rule"><code class="proc-def">sign-rule</code></a> 
+<dt><a name="proc-comma-rule"><code class="proc-def">comma-rule</code></a> 
+<dt><a name="proc-comma-sep"><code class="proc-def">comma-sep</code></a> 
+<dd class="proc-def">
+<p>
+  Additional vars used for formatting as described in
+  <a href="#Formatting-Numbers">formatting numbers</a>.
+</dd>
+
+<dt><a name="proc-word-separator?"><code class="proc-def">word-separator?</code></a> 
+<dd class="proc-def">
+<p>
+  A character predicate used to tokenize words for
+  <code>wrapped</code> and <code>justify</code>.  Defaults to
+  <code>char-whitespace?</code>.  More flexibility is
+  available with <code>wrapped/list</code>.
+</dd>
+
+<dt><a name="proc-color"><code class="proc-def">color</code></a> 
+<dt><a name="proc-bold"><code class="proc-def">bold</code></a> 
+<dt><a name="proc-underline"><code class="proc-def">underline</code></a> 
+<dd class="proc-def">
+<p>
+  Stores the current terminal properties when using
+  <a href="#Formatting-with-Color">formatting with color</a>, to
+  restore properly when nesting.
+</dd>
+
+<dt><a name="proc-ambiguous-is-wide"><code class="proc-def">ambiguous-is-wide?</code></a>
+<dd class="proc-def">
+<p>
+  Use to choose between <code>unicode-terminal-width</code> and
+  <code>unicode-terminal-width/jp</code> when formatting with
+  <code>as-unicode</code>.  The default value is implementation
+  defined.  A reasonable approach might be to check if the TERM
+  environment variable is kterm when writing to a terminal.
+  One could also check if the recipient of an email were using
+  a .jp email address, however frequent users of the ambiguous
+  characters in such environments are likely to have changed
+  their fonts.
+</dd>
+
+
+<h1><a name="Implementation">Implementation</a></h1>
+
+<p>
+  A reference implementation in portable R7RS is available at
+  <a href="https://github.com/ashinn/chibi-scheme/blob/master/lib/srfi/166.sld">https://github.com/ashinn/chibi-scheme/blob/master/lib/srfi/166.sld</a>,
+  and included files, depending on SRFI 1, 69, 117, 130.
+  Prior to finalization, this implementation may not be up to
+  date with the SRFI draft.
+
+<p>
+  The reference implementation is an environment monad, with a
+  pluggable backend allowing either passing explicit state or
+  maintaining all state variables in parameters.  An alternate
+  implementation could use <a href="http://srfi.schemers.org/srfi-165/">SRFI 165</a>
+  directly.  Note <code>columnar</code> and <code>trimmed/lazy</code>
+  rely on first-class continuations, however an implementation written
+  in CPS-style would not require this.
+
+<h1><a name="Acknowledgements">Acknowledgements</a></h1>
+
+<p>
+  The author would like to thank everyone who provided feedback
+  for SRFI 159 and SRFI 166, in particular Marc Nieper-Wißkirchen
+  for detailed feedback and bug reports and work on an alternate
+  implementation, Jim Rees who provided many bugfixes early on,
+  John Cowan for early editorial comments,
+  and Arthur Gleckler for his hard work editing SRFIs as always.
+
+<h1><a name="References">References</a></h1>
+
+<dl>
+<dt class="biblio"><a name="ref-R7RS"><strong>R7RS</strong></a>
+<dd>
+<pre class="biblio">
+      Alex Shinn, John Cowan, Arthur Gleckler, Revised^7 Report on the Algorithmic Language Scheme
+      <a href="http://trac.sacrideo.us/wg/raw-attachment/wiki/WikiStart/r7rs.pdf">http://trac.sacrideo.us/wg/raw-attachment/wiki/WikiStart/r7rs.pdf</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-CommonLisp"><strong>CommonLisp</strong></a>
+<dd>
+<pre class="biblio">
+      Guy L. Steele Jr., Common Lisp Hyperspec
+      <a href="http://www.harlequin.com/education/books/HyperSpec/">http://www.harlequin.com/education/books/HyperSpec/</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-SRFI-28"><strong>SRFI-28</strong></a>
+<dd>
+<pre class="biblio">
+      Scott G. Miller, SRFI 28 - Basic Format Strings
+      <a href="http://srfi.schemers.org/srfi-28/">http://srfi.schemers.org/srfi-28/</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-SRFI-48"><strong>SRFI-48</strong></a>
+<dd>
+<pre class="biblio">
+      Ken Dickey, SRFI 48 - Intermediate Format Strings
+      <a href="http://srfi.schemers.org/srfi-48/">http://srfi.schemers.org/srfi-48/</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-SRFI-28"><strong>SRFI-159</strong></a>
+<dd>
+<pre class="biblio">
+      Alex Shinn, SRFI 159 - Combinator Formatting
+      <a href="http://srfi.schemers.org/srfi-159/">http://srfi.schemers.org/srfi-159/</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-IOMANIP"><strong>IOMANIP</strong></a>
+<dd>
+<pre class="biblio">
+      C++ iomanip
+      <a href="http://www.cplusplus.com/reference/iomanip/">http://www.cplusplus.com/reference/iomanip/</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-Perl6"><strong>Perl6</strong></a>
+<dd>
+<pre class="biblio">
+      Damian Conway, Perl6 Exegesis 7 - formatting
+      <a href="http://www.perl.com/lpt/a/819">http://www.perl.com/lpt/a/819</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-FMT"><strong>FMT</strong></a>
+<dd>
+<pre class="biblio">
+      Alex Shinn, fmt - Combinator Formatting
+      <a href="http://synthcode.com/scheme/fmt/">http://synthcode.com/scheme/fmt/</a>
+</pre>
+
+
+<dt class="biblio"><a name="ref-TR11"><strong>TR11</strong></a>
+<dd>
+<pre class="biblio">
+      Ken Lunde, Unicode® Standard Annex #11 - East Asian Width
+      <a href="http://www.unicode.org/reports/tr11/">http://www.unicode.org/reports/tr11/</a>
+</pre>
+</dl>
+
+<h1>Copyright</h1>
+
+<p>Copyright (C) Alex Shinn 2019. All Rights Reserved.
+
+<p>
+This document and translations of it may be copied and furnished to
+others, and derivative works that comment on or otherwise explain it or
+assist in its implementation may be prepared, copied, published and
+distributed, in whole or in part, without restriction of any kind,
+provided that the above copyright notice and this paragraph are included
+on all such copies and derivative works.  However, this document itself
+may not be modified in any way, such as by removing the copyright notice
+or references to the Scheme Request For Implementation process or
+editors, except as needed for the purpose of developing SRFIs in which
+case the procedures for copyrights defined in the SRFI process must be
+followed, or as required to translate it into languages other than
+English.
+
+<p>
+The limited permissions granted above are perpetual and will not be
+revoked by the authors or their successors or assigns.
+
+<p>
+This document and the information contained herein is provided on an "AS
+IS" basis and THE AUTHOR AND THE SRFI EDITORS DISCLAIM ALL WARRANTIES,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE
+USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY
+IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR
+PURPOSE.
+
+</body>
+</html>
