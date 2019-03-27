@@ -97,6 +97,7 @@ Summary of differences from SRFI 156:
   these formatters efficiently without resorting to capturing and
   manipulating intermediate strings.
 
+<p>
   This SRFI is an updated version of SRFI 159, primarily with the
   difference that state variables are hygienic.
 
@@ -812,7 +813,7 @@ are provided as convenience extensions.  The libraries are as follows:
   the <var>fmt</var>s exceed <var>width</var>, stop formatting and truncate the
   result, returning control to whoever called <var>trimmed</var>.  If <var>width</var>
   is not exceeded, is equivalent to <code>each</code>.  Note this implies
-  that in the presense of zero width characters such as
+  that in the presence of zero width characters such as
   combining characters in <code>as-unicode</code>, the longest output that
   does not exceed <var>width</var> should be taken.
 
