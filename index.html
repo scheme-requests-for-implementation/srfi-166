@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.2//EN">
+<!DOCTYPE html>
 <html>
   <head>
     <title>Monadic Formatting</title>
@@ -21,7 +21,7 @@
   <body>
     <h1>SRFI 166: Monadic Formatting</h1>
     <p class="authors">by Alex Shinn</p>
-    <p class="status">status: <em>draft</em> (2019/3/27)</p><span class="see-also">See also <a href="/srfi-159/">SRFI 159: Combinator Formatting</a>.</span>
+    <p class="status">status: <em>draft</em> (2019/3/27)</p><span class="see-also">See also <a href="/srfi-13/">SRFI 13: String Libraries</a> and <a href="/srfi-159/">SRFI 159: Combinator Formatting</a>.</span>
 
     <ul class="info">
       <li><a href="srfi-166.html">The SRFI Document</a></li>
@@ -80,4 +80,16 @@
 
 <p>
   This SRFI is an updated version of SRFI 159, primarily with the
-  difference that state variables are hygienic.</p></body></html>
+  difference that state variables are hygienic.</p>
+
+<p>
+Summary of differences from SRFI 159:
+<ul>
+  <li>State variables are first class and hygienic</li>
+  <li>Added <code>written-shared</code>, <code>pretty-shared</code></li>
+  <li>Added <code>as-color</code>, <code>pretty-colored</code></li>
+  <li>Added <code>ambiguous-is-wide?</code> state variable</li>
+  <li>Restored non-uniform comma rules as needed in India</li>
+  <li>Restored <code>upcased</code> and <code>downcased</code></li>
+  <li>Several clarifications and more examples</li>
+</ul></body></html>
