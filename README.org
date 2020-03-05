@@ -6,7 +6,7 @@ This repository hosts [[https://srfi.schemers.org/srfi-166/][SRFI 166]]: Monadic
 
 This SRFI is in /draft/ status.
 
-See also [[https://srfi.schemers.org/srfi-159/][SRFI 159: Combinator Formatting]].
+See also [[https://srfi.schemers.org/srfi-13/][SRFI 13: String Libraries]] and [[https://srfi.schemers.org/srfi-159/][SRFI 159: Combinator Formatting]].
 
 The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-166/srfi-166.html][SRFI Document]].
 
