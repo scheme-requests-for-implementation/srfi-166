@@ -1,5 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN"
-  'http://www.w3.org/TR/REC-html40/strict.dtd'>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
 <html lang=en-US>
   <head>
     <meta charset="utf-8" />
@@ -59,7 +58,7 @@ Summary of differences from SRFI 156:
   <li>Restored <code>upcased</code> and <code>downcased</code></li>
   <li>Several clarifications and more examples</li>
 </ul>
-<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+${1:NUMBER}+at+srfi+dotschemers+dot+org">srfi-166@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-166">archive</a>.</p>
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+166+at+srfi+dotschemers+dot+org">srfi-166@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-166">archive</a>.</p>
 <ul>
   <li>Received: 2019/3/27</li>
 </ul>
@@ -164,7 +163,7 @@ Summary of differences from SRFI 156:
 <b>Pretty</b>
 <a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simple">pretty-simple</a> <a href="#proc-pretty-color">pretty-color</a>
 <b>Columnar</b>
-<a href="#proc-columnar">columnar</a> <a href="#proc-tabular">tabular</a> <a href="#proc-wrapped">wrapped</a> <a href="#proc-wrapped/list">wrapped/list</a> <a href="#proc-wrapped_2fchar">wrapped/char</a>
+<a href="#proc-columnar">columnar</a> <a href="#proc-tabular">tabular</a> <a href="#proc-wrapped">wrapped</a> <a href="#proc-wrapped_2flist">wrapped/list</a> <a href="#proc-wrapped_2fchar">wrapped/char</a>
 <a href="#proc-justified">justified</a> <a href="#proc-from-file">from-file</a> <a href="#proc-line-numbers">line-numbers</a>
 <b>Unicode</b>
 <a href="#proc-as-unicode">as-unicode</a> <a href="#proc-unicode-terminal-width">unicode-terminal-width</a>
@@ -460,7 +459,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 <dl>
-<dt>(<a name="proc-numeric/comma"><code class="proc-def">numeric/comma</code></a> <var>num</var> <var>[comma-rule</var> <var>radix</var> <var>precision</var> <var>sign-rule]</var>)
+<dt>(<a name="proc-numeric_2fcomma"><code class="proc-def">numeric/comma</code></a> <var>num</var> <var>[comma-rule</var> <var>radix</var> <var>precision</var> <var>sign-rule]</var>)
 <dd class="proc-def">
 <p>
   Shortcut for <code>numeric</code> to print with commas.
@@ -478,7 +477,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<dt>(<a name="proc-numeric/si"><code class="proc-def">numeric/si</code></a> <var>num</var> <var>[base</var> <var>separator]</var>)
+<dt>(<a name="proc-numeric_2fsi"><code class="proc-def">numeric/si</code></a> <var>num</var> <var>[base</var> <var>separator]</var>)
 <dd class="proc-def">
 <p>
   Abbreviates <var>num</var> with an SI suffix as in the -h or --si
@@ -528,7 +527,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 <dl>
-<dt>(<a name="proc-numeric/fitted"><code class="proc-def">numeric/fitted</code></a> <var>width</var> <var>n</var> <var>.</var> <var>args</var>)
+<dt>(<a name="proc-numeric_2ffitted"><code class="proc-def">numeric/fitted</code></a> <var>width</var> <var>n</var> <var>.</var> <var>args</var>)
 <dd class="proc-def">
 <p>
   Like <code>numeric</code>, but if the result doesn't fit in
@@ -687,9 +686,9 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<dt>(<a name="proc-joined/prefix"><code class="proc-def">joined/prefix</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
+<dt>(<a name="proc-joined_2fprefix"><code class="proc-def">joined/prefix</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
 <dd class="proc-def"></dd>
-<dt>(<a name="proc-joined/suffix"><code class="proc-def">joined/suffix</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
+<dt>(<a name="proc-joined_2fsuffix"><code class="proc-def">joined/suffix</code></a> <var>mapper</var> <var>list</var> <var>[sep]</var>)
 <dd class="proc-def">
 <pre class="code-example">
 (show #f (joined/prefix displayed '(usr local bin) "/"))
@@ -704,7 +703,7 @@ are provided as convenience extensions.  The libraries are as follows:
   Like <code>joined</code>, but inserts <var>sep</var> before/after every element.
 </dd>
 
-<dt>(<a name="proc-joined/last"><code class="proc-def">joined/last</code></a> <var>mapper</var> <var>last-mapper</var> <var>list</var> <var>[sep]</var>)
+<dt>(<a name="proc-joined_2flast"><code class="proc-def">joined/last</code></a> <var>mapper</var> <var>last-mapper</var> <var>list</var> <var>[sep]</var>)
 <dd class="proc-def">
 <p>
   Like <code>joined</code>, but the last element of the list is formatted with
@@ -720,7 +719,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<dt>(<a name="proc-joined/dot"><code class="proc-def">joined/dot</code></a> <var>mapper</var> <var>dot-mapper</var> <var>list</var> <var>[sep]</var>)
+<dt>(<a name="proc-joined_2fdot"><code class="proc-def">joined/dot</code></a> <var>mapper</var> <var>dot-mapper</var> <var>list</var> <var>[sep]</var>)
 <dd class="proc-def">
 <p>
   Like <code>joined</code>, but if the list is a dotted list, then formats the
@@ -739,7 +738,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<dt>(<a name="proc-joined/range"><code class="proc-def">joined/range</code></a> <var>mapper</var> <var>start</var> <var>[end</var> <var>sep]</var>)
+<dt>(<a name="proc-joined_2frange"><code class="proc-def">joined/range</code></a> <var>mapper</var> <var>start</var> <var>[end</var> <var>sep]</var>)
 <dd class="proc-def">
 <p>
   Like <code>joined</code>, but counts from <var>start</var> (inclusive) to <var>end</var>
@@ -759,9 +758,9 @@ are provided as convenience extensions.  The libraries are as follows:
 <dl>
 <dt>(<a name="proc-padded"><code class="proc-def">padded</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
-<dt>(<a name="proc-padded/right"><code class="proc-def">padded/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-padded_2fright"><code class="proc-def">padded/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
-<dt>(<a name="proc-padded/both"><code class="proc-def">padded/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-padded_2fboth"><code class="proc-def">padded/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
 <p>
   Analogs of SRFI-13 <code>string-pad</code>, these add extra space to the
@@ -804,9 +803,9 @@ are provided as convenience extensions.  The libraries are as follows:
 
 <dt>(<a name="proc-trimmed"><code class="proc-def">trimmed</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
-<dt>(<a name="proc-trimmed/right"><code class="proc-def">trimmed/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-trimmed_2fright"><code class="proc-def">trimmed/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
-<dt>(<a name="proc-trimmed/both"><code class="proc-def">trimmed/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-trimmed_2fboth"><code class="proc-def">trimmed/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
 <p>
   Analogs of SRFI-13 <code>string-trim</code>, truncates the output of the
@@ -853,7 +852,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 <p>
-<dt>(<a name="proc-trimmed/lazy"><code class="proc-def">trimmed/lazy</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-trimmed_2flazy"><code class="proc-def">trimmed/lazy</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
 <p>
   A variant of <code>trimmed</code> which generates each <var>fmt</var> in
@@ -866,9 +865,9 @@ are provided as convenience extensions.  The libraries are as follows:
 <dl>
 <dt>(<a name="proc-fitted"><code class="proc-def">fitted</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
-<dt>(<a name="proc-fitted/right"><code class="proc-def">fitted/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-fitted_2fright"><code class="proc-def">fitted/right</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
-<dt>(<a name="proc-fitted/both"><code class="proc-def">fitted/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-fitted_2fboth"><code class="proc-def">fitted/both</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
 <p>
   A combination of <code>padded</code> and <code>trimmed</code>, ensures the output
@@ -876,7 +875,7 @@ are provided as convenience extensions.  The libraries are as follows:
   it goes under.
 </dd>
 
-<h2><a name="Pretty-Printinf">Pretty Printing</a></h2>
+<h2><a name="Pretty-Printing">Pretty Printing</a></h2>
 
 The homoiconic nature of Lisp makes pretty printing an indispensable
 utility for presenting code in a readable format.
@@ -1044,14 +1043,14 @@ def     456
 </dd>
 
 <dl>
-<dt>(<a name="proc-wrapped/list"><code class="proc-def">wrapped/list</code></a> <var>list-of-strings</var>)
+<dt>(<a name="proc-wrapped_2flist"><code class="proc-def">wrapped/list</code></a> <var>list-of-strings</var>)
 <dd class="proc-def">
 <p>
   Like wrapped, but taking a pre-tokenized list of strings.
 </dd>
 
 <dl>
-<dt>(<a name="proc-wrapped/char"><code class="proc-def">wrapped/char</code></a> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-wrapped_2fchar"><code class="proc-def">wrapped/char</code></a> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
 <p>
   Like <code>wrapped</code>, but splits simply on individual characters
@@ -1157,7 +1156,7 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
 </dd>
 
 <dd class="proc-def"></dd>
-<dt>(<a name="proc-as-black"><code class="proc-def">as-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-color"><code class="proc-def">as-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
 <p>
   Each of <var>red</var>, <var>green</var>, <var>blue</var>
   should be an exact integer in the range <code>[0, 5]</code>,
@@ -1246,7 +1245,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   translated as if first passed to <code>string-upcase</code> or
   <code>string-downcase</code>, respectively.  Note these should
   also work correctly when combined with the ANSI escapes from
-  <a href="Formatting-with-Color">formatting with color</a>,
+  <a href="#Formatting-with-Color">formatting with color</a>,
   which includes ASCII letters in the escapes.
 <p>
   Note there should be no internal buffering, which may have
@@ -1657,7 +1656,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Alex Shinn, John Cowan, Arthur Gleckler, Revised^7 Report on the Algorithmic Language Scheme
-      <a href="http://trac.sacrideo.us/wg/raw-attachment/wiki/WikiStart/r7rs.pdf">http://trac.sacrideo.us/wg/raw-attachment/wiki/WikiStart/r7rs.pdf</a>
+      <a href="https://small.r7rs.org/attachment/r7rs.pdf">https://small.r7rs.org/attachment/r7rs.pdf</a>
 </pre>
 
 
@@ -1665,7 +1664,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Guy L. Steele Jr., Common Lisp Hyperspec
-      <a href="http://www.harlequin.com/education/books/HyperSpec/">http://www.harlequin.com/education/books/HyperSpec/</a>
+      <a href="http://www.lispworks.com/documentation/HyperSpec/Front/">http://www.lispworks.com/documentation/HyperSpec/Front/</a>
 </pre>
 
 
@@ -1673,7 +1672,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Scott G. Miller, SRFI 28 - Basic Format Strings
-      <a href="http://srfi.schemers.org/srfi-28/">http://srfi.schemers.org/srfi-28/</a>
+      <a href="https://srfi.schemers.org/srfi-28/">https://srfi.schemers.org/srfi-28/</a>
 </pre>
 
 
@@ -1681,7 +1680,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Ken Dickey, SRFI 48 - Intermediate Format Strings
-      <a href="http://srfi.schemers.org/srfi-48/">http://srfi.schemers.org/srfi-48/</a>
+      <a href="https://srfi.schemers.org/srfi-48/">https://srfi.schemers.org/srfi-48/</a>
 </pre>
 
 
@@ -1689,7 +1688,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Alex Shinn, SRFI 159 - Combinator Formatting
-      <a href="http://srfi.schemers.org/srfi-159/">http://srfi.schemers.org/srfi-159/</a>
+      <a href="https://srfi.schemers.org/srfi-159/">https://srfi.schemers.org/srfi-159/</a>
 </pre>
 
 
@@ -1697,7 +1696,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       C++ iomanip
-      <a href="http://www.cplusplus.com/reference/iomanip/">http://www.cplusplus.com/reference/iomanip/</a>
+      <a href="https://www.cplusplus.com/reference/iomanip/">https://www.cplusplus.com/reference/iomanip/</a>
 </pre>
 
 
@@ -1705,7 +1704,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Damian Conway, Perl6 Exegesis 7 - formatting
-      <a href="http://www.perl.com/lpt/a/819">http://www.perl.com/lpt/a/819</a>
+      <a href="https://www.perl.com/pub/2004/02/27/exegesis7.html/">https://www.perl.com/pub/2004/02/27/exegesis7.html/</a>
 </pre>
 
 
@@ -1721,7 +1720,7 @@ Riddles in the Dark....................................................115
 <dd>
 <pre class="biblio">
       Ken Lunde, Unicode® Standard Annex #11 - East Asian Width
-      <a href="http://www.unicode.org/reports/tr11/">http://www.unicode.org/reports/tr11/</a>
+      <a href="https://www.unicode.org/reports/tr11/">https://www.unicode.org/reports/tr11/</a>
 </pre>
 </dl>
 
