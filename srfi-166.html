@@ -6,7 +6,7 @@
     <meta name="keywords" content="Scheme, programming language, SRFI, format">
     <title>SRFI 166: Monadic Formatting</title>
     <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png" />
-<link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css" />
+    <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css" />
 <style type="text/css">
 body { 
    max-width: 7.6in;
@@ -86,6 +86,7 @@ var {
   these formatters efficiently without resorting to capturing and
   manipulating intermediate strings.
 
+<p>
   This SRFI is an updated version of SRFI 159, primarily with the
   difference that state variables are hygienic.
 
@@ -817,7 +818,7 @@ are provided as convenience extensions.  The libraries are as follows:
   even.
   If <var>width</var>
   is not exceeded, is equivalent to <code>each</code>.  Note this implies
-  that in the presense of zero width characters such as
+  that in the presence of zero width characters such as
   combining characters in <code>as-unicode</code>, the longest output that
   does not exceed <var>width</var> should be kept (or removed when trimming
   on the left).
@@ -1629,7 +1630,7 @@ Riddles in the Dark....................................................115
 <h1><a name="Implementation">Implementation</a></h1>
 
 <p>
-  A reference implementation in portable R7RS will be available at
+  A sample implementation in portable R7RS will be available at
   <a href="https://github.com/ashinn/chibi-scheme/blob/master/lib/srfi/166.sld">https://github.com/ashinn/chibi-scheme/blob/master/lib/srfi/166.sld</a>,
   and included files, depending on SRFI 1, 69, 117, 130, 165.  It is
   mostly the same as in SRFI 159.
