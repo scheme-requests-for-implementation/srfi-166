@@ -168,17 +168,18 @@ var {
 <a href="#proc-string-width">string-width</a> <a href="#proc-pad-char">pad-char</a> <a href="#proc-ellipsis">ellipsis</a>
 <a href="#proc-radix">radix</a> <a href="#proc-precision">precision</a> <a href="#proc-decimal-sep">decimal-sep</a> <a href="#proc-decimal-align">decimal-align</a>
 <b>Pretty</b>
-<a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simple">pretty-simple</a> <a href="#proc-pretty-color">pretty-color</a>
+<a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simply">pretty-simply</a> <a href="#proc-pretty-color">pretty-color</a>
 <b>Columnar</b>
 <a href="#proc-columnar">columnar</a> <a href="#proc-tabular">tabular</a> <a href="#proc-wrapped">wrapped</a> <a href="#proc-wrapped_2flist">wrapped/list</a> <a href="#proc-wrapped_2fchar">wrapped/char</a>
 <a href="#proc-justified">justified</a> <a href="#proc-from-file">from-file</a> <a href="#proc-line-numbers">line-numbers</a>
 <b>Unicode</b>
-<a href="#proc-as-unicode">as-unicode</a> <a href="#proc-unicode-terminal-width">unicode-terminal-width</a>
+<a href="#proc-as-unicode">as-unicode</a> <a href="#proc-unicode-terminal-width">unicode-terminal-width</a> <a href="#proc-unicode-terminal-width_2fwide">unicode-terminal-width/wide</a>
 <a href="#proc-upcased">upcased</a> <a href="#proc-downcased">downcased</a>
 <b>Color</b>
 <a href="#proc-as-red">as-red</a> <a href="#proc-as-blue">as-blue</a> <a href="#proc-as-green">as-green</a> <a href="#proc-as-cyan">as-cyan</a> <a href="#proc-as-yellow">as-yellow</a>
 <a href="#proc-as-magenta">as-magenta</a> <a href="#proc-as-white">as-white</a> <a href="#proc-as-black">as-black</a> <a href="#proc-as-bold">as-bold</a> <a href="#proc-as-underline">as-underline</a>
 <a href="#proc-as-color">as-color</a>
+<a href="#proc-as-true-color">as-true-color</a>
 </pre>
 
 <h1><a name="Types-and-Naming-Conventions">Types and Naming Conventions</a></h1>
@@ -910,7 +911,7 @@ utility for presenting code in a readable format.
 </dd>
 
 <dl>
-<dt>(<a name="proc-pretty-simple"><code class="proc-def">pretty-simple</code></a> <var>obj</var>)
+<dt>(<a name="proc-pretty-simply"><code class="proc-def">pretty-simply</code></a> <var>obj</var>)
 <dd class="proc-def">
 <p>
   The same as <code>pretty</code>, but without using any datum labels.
@@ -1167,14 +1168,22 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
 <p>
   Each of <var>red</var>, <var>green</var>, <var>blue</var>
   should be an exact integer in the range <code>[0, 5]</code>,
-  representing 6 bits each of red, green and blue components
-  in an RGB color model.  Outputs the formatters colored
+  representing the corresponding components
+  of an RGB color model.  Outputs the formatters colored
   accordingly using 8-bit color ANSI escapes.
 </dd>
 
 <p>
   It is up to the caller to ensure that the terminals support
   colors.
+
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-as-true-color"><code class="proc-def">as-true-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
+<p>
+  The 24-bit True Color equivalent of <code>as-color</code>,
+  taking a range of <code>[0, 255]</code> for each component,
+  for use with terminals supporting this.
+</dd>
 
 <h2><a name="Unicode">Unicode</a></h2>
 
@@ -1189,14 +1198,15 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <pre class="code-example">
     (fn (ambiguous-is-wide?)
       (with ((string-width (if ambiguous-is-wide?
-                               unicode-terminal-width/jp
+                               unicode-terminal-width/wide
                                unicode-terminal-width)))
         fmt ...))
 </pre>
 
   Padding, trimming and tabbing, etc. will generally not do the right
   thing in the presence of zero-width and double-width Unicode
-  characters.  This formatter overrides the <var>string-width</var> state var
+  characters, or ANSI escapes.  This formatter overrides the
+  <var>string-width</var> state var
   used in column tracking to do the right thing in such cases,
   considering Unicode double or full width characters as 2 characters
   wide (as they typically are in fixed-width terminals), while
@@ -1234,7 +1244,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   current Unicode specification at time of writing this SRFI, 12.0.0.
 </dd>
 
-<dt>(<a name="proc-unicode-terminal-width-jp"><code class="proc-def">unicode-terminal-width/jp</code></a> <var>str</var> [start end])
+<dt>(<a name="proc-unicode-terminal-width_2fwide"><code class="proc-def">unicode-terminal-width/wide</code></a> <var>str</var> [start end])
 <dd class="proc-def">
 <p>
   Equivalent to <code>unicode-terminal-width</code>, except that
@@ -1446,6 +1456,8 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   output and perform transformations on strings before outputting, but
   should generally wrap the existing <var>output</var> to preserve expected
   behavior.
+
+  The default output procedure is exported as <code>output-default</code>.
 </dd>
 
 <dl>
@@ -1621,7 +1633,7 @@ Riddles in the Dark....................................................115
 <dd class="proc-def">
 <p>
   Use to choose between <code>unicode-terminal-width</code> and
-  <code>unicode-terminal-width/jp</code> when formatting with
+  <code>unicode-terminal-width/wide</code> when formatting with
   <code>as-unicode</code>.  The default value is implementation
   defined.  A reasonable approach might be to check if the TERM
   environment variable is kterm when writing to a terminal.
@@ -1733,7 +1745,7 @@ Riddles in the Dark....................................................115
 
 <h1>Copyright</h1>
 
-<p>Copyright (C) Alex Shinn 2019. All Rights Reserved.
+<p>Copyright (C) Alex Shinn 2020. All Rights Reserved.
 
 <p> Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation files
