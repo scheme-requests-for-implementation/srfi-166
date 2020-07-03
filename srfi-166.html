@@ -99,8 +99,10 @@ var {
 <ul>
   <li>State variables are first class and hygienic</li>
   <li>Added <code>written-shared</code>, <code>pretty-shared</code></li>
-  <li>Added <code>as-color</code>, <code>pretty-colored</code></li>
-  <li>Added <code>ambiguous-is-wide?</code> state variable</li>
+  <li>Added <code>as-italic</code>, <code>as-color</code>, <code>as-true-color</code>, <code>on-<i>color</i></code> background variants, and <code>pretty-with-color</code></li>
+  <li>Added <code>ambiguous-is-wide?</code> state variable and <code>string-terminal-width/wide</code> utility</li>
+  <li>Added <code>substring/width</code> state var used in trimming, with <code>substring-terminal-width(/wide)</code> utilities</li>
+  <li>Renamed <code>as-unicode</code> to <code>terminal-aware</code></li>
   <li>Restored non-uniform comma rules as needed in India</li>
   <li>Restored <code>upcased</code> and <code>downcased</code></li>
   <li>Several clarifications and more examples</li>
@@ -169,18 +171,23 @@ var {
 <a href="#proc-string-width">string-width</a> <a href="#proc-pad-char">pad-char</a> <a href="#proc-ellipsis">ellipsis</a>
 <a href="#proc-radix">radix</a> <a href="#proc-precision">precision</a> <a href="#proc-decimal-sep">decimal-sep</a> <a href="#proc-decimal-align">decimal-align</a>
 <b>Pretty</b>
-<a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simply">pretty-simply</a> <a href="#proc-pretty-color">pretty-color</a>
+<a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simply">pretty-simply</a> <a href="#proc-pretty-with-color">pretty-with-color</a>
 <b>Columnar</b>
 <a href="#proc-columnar">columnar</a> <a href="#proc-tabular">tabular</a> <a href="#proc-wrapped">wrapped</a> <a href="#proc-wrapped_2flist">wrapped/list</a> <a href="#proc-wrapped_2fchar">wrapped/char</a>
 <a href="#proc-justified">justified</a> <a href="#proc-from-file">from-file</a> <a href="#proc-line-numbers">line-numbers</a>
 <b>Unicode</b>
-<a href="#proc-as-unicode">as-unicode</a> <a href="#proc-unicode-terminal-width">unicode-terminal-width</a> <a href="#proc-unicode-terminal-width_2fwide">unicode-terminal-width/wide</a>
+<a href="#proc-terminal-aware">terminal-aware</a>
+<a href="#proc-string-terminal-width">string-terminal-width</a> <a href="#proc-string-terminal-width_2fwide">string-terminal-width/wide</a>
+<a href="#proc-substring-terminal-width">substring-terminal-width</a> <a href="#proc-substring-terminal-width_2fwide">substring-terminal-width/wide</a>
 <a href="#proc-upcased">upcased</a> <a href="#proc-downcased">downcased</a>
 <b>Color</b>
-<a href="#proc-as-red">as-red</a> <a href="#proc-as-blue">as-blue</a> <a href="#proc-as-green">as-green</a> <a href="#proc-as-cyan">as-cyan</a> <a href="#proc-as-yellow">as-yellow</a>
-<a href="#proc-as-magenta">as-magenta</a> <a href="#proc-as-white">as-white</a> <a href="#proc-as-black">as-black</a> <a href="#proc-as-bold">as-bold</a> <a href="#proc-as-underline">as-underline</a>
-<a href="#proc-as-color">as-color</a>
-<a href="#proc-as-true-color">as-true-color</a>
+<a href="#proc-as-red">as-red</a> <a href="#proc-as-blue">as-blue</a> <a href="#proc-as-green">as-green</a> <a href="#proc-as-cyan">as-cyan</a>
+<a href="#proc-as-yellow">as-yellow</a> <a href="#proc-as-magenta">as-magenta</a> <a href="#proc-as-white">as-white</a> <a href="#proc-as-black">as-black</a>
+<a href="#proc-as-bold">as-bold</a> <a href="#proc-as-italic">as-italic</a> <a href="#proc-as-underline">as-underline</a>
+<a href="#proc-as-color">as-color</a> <a href="#proc-as-true-color">as-true-color</a>
+<a href="#proc-on-red">on-red</a> <a href="#proc-on-blue">on-blue</a> <a href="#proc-on-green">on-green</a> <a href="#proc-on-cyan">on-cyan</a>
+<a href="#proc-on-yellow">on-yellow</a> <a href="#proc-on-magenta">on-magenta</a> <a href="#proc-on-white">on-white</a> <a href="#proc-on-black">on-black</a>
+<a href="#proc-on-color">on-color</a> <a href="#proc-on-true-color">on-true-color</a>
 </pre>
 
 <h1><a name="Types-and-Naming-Conventions">Types and Naming Conventions</a></h1>
@@ -296,6 +303,8 @@ are provided as convenience extensions.  The libraries are as follows:
   are output as with <code>written</code> (including nested strings and chars
   inside <var>obj</var>). This is the default behavior for top-level formats
   in <code>show</code>, <code>each</code> and most other high-level formatters.
+<p>
+  It is an error if <var>obj</var> is a procedure which is not a formatter.
 </dd>
 
 <dl>
@@ -490,10 +499,12 @@ are provided as convenience extensions.  The libraries are as follows:
 <dd class="proc-def">
 <p>
   Abbreviates <var>num</var> with an SI suffix as in the -h or --si
-  option to many GNU commands.  The base defaults to 1024, using
-  suffix names like Ki, Mi, Gi, etc.  All other bases (e.g. the standard
-  1000) have the suffixes k, M, G, etc.  If <var>separator</var> is
-  provided, it is inserted after the number, before any suffix.
+  option to many GNU commands.  The base defaults to 1000, using
+  suffix names k, M, G, etc.  If the base is 1024, the suffixes are
+  Ki, Mi, Gi, etc. (note the capital "Ki" in this case).  It is an
+  error to specify a base other than 1000 or 1024.  If
+  <var>separator</var> is provided, it is inserted after the number,
+  before any suffix, for example to allow a space.
 
 <pre class="code-example">
 (show #f (numeric/si 608))
@@ -512,16 +523,16 @@ are provided as convenience extensions.  The libraries are as follows:
 
 <pre class="code-example">
 (show #f (numeric/si 3986))
-=&gt; "3.9Ki"
+=&gt; "4k"
 </pre>
 
 <pre class="code-example">
-(show #f (numeric/si 3986 1000) "B")
-=&gt; "4kB"
+(show #f (numeric/si 3986 1024) "B")
+=&gt; "3.9KiB"
 </pre>
 
 <pre class="code-example">
-(show #f (numeric/si 1.23e-6 1000) "m")
+(show #f (numeric/si 1.23e-6) "m")
 =&gt; "1.2µm"
 </pre>
 
@@ -823,12 +834,17 @@ are provided as convenience extensions.  The libraries are as follows:
   on the right, and <code>trimmed/both</code> truncates on both the left
   and right, truncating 1 more on the right if the <var>width</var> isn't
   even.
-  If <var>width</var>
-  is not exceeded, is equivalent to <code>each</code>.  Note this implies
-  that in the presence of zero width characters such as
-  combining characters in <code>as-unicode</code>, the longest output that
-  does not exceed <var>width</var> should be kept (or removed when trimming
-  on the left).
+  If <var>width</var> is not exceeded, is equivalent to <code>each</code>.
+
+<p>
+  Width is measured with <code>string-width</code>, and trimming is
+  then done by calling <code>substring/width</code> on the desired
+  left and right <i>widths</i>.  The default values for these are
+  <code>string-length</code> and <code>substring</code>, indicating
+  the widths are are equivalent to string indexes, however this may
+  have different semantics as in <code>terminal-aware</code> discussed
+  below, and other extensions could be imagined such as enforcing
+  trimming on word boundaries.
 
 <p>
   If a truncation <var>ellipsis</var> is set, then when any truncation occurs
@@ -857,6 +873,16 @@ are provided as convenience extensions.  The libraries are as follows:
 <pre class="code-example">
 (show #f (with ((ellipsis "_")) (trimmed/both 5 "abcdef")))
 =&gt;  "_bcd_"
+</pre>
+
+<pre class="code-example">
+(show #f (trimmed/right 2 "日本語"))
+=&gt;  "日本"
+</pre>
+
+<pre class="code-example">
+(show #f (terminal-aware (trimmed/right 2 "日本語")))
+=&gt;  "日"
 </pre>
 </dd>
 
@@ -919,7 +945,7 @@ utility for presenting code in a readable format.
 </dd>
 
 <dl>
-<dt>(<a name="proc-pretty-color"><code class="proc-def">pretty-color</code></a> <var>obj</var>)
+<dt>(<a name="proc-pretty-with-color"><code class="proc-def">pretty-with-color</code></a> <var>obj</var>)
 <dd class="proc-def">
 <p>
   Equivalent to <code>pretty</code>, but may optionally include ANSI escape
@@ -1146,6 +1172,8 @@ which might output:
 
 The following procedures are provided in the <code>(srfi 166 color)</code> library.
 
+<p>
+
 <dl>
 <dt>(<a name="proc-as-red"><code class="proc-def">as-red</code></a> <var>fmt</var> <var>...</var>)</dt>
 <dd class="proc-def"></dd>
@@ -1157,11 +1185,28 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
 <dt>(<a name="proc-as-white"><code class="proc-def">as-white</code></a> <var>fmt</var> <var>...</var>)</dt>
 <dt>(<a name="proc-as-black"><code class="proc-def">as-black</code></a> <var>fmt</var> <var>...</var>)</dt>
 <dt>(<a name="proc-as-bold"><code class="proc-def">as-bold</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-as-italic"><code class="proc-def">as-italic</code></a> <var>fmt</var> <var>...</var>)</dt>
 <dt>(<a name="proc-as-underline"><code class="proc-def">as-underline</code></a> <var>fmt</var> <var>...</var>)</dt>
 <dd class="proc-def">
 <p>
-  Outputs the formatters <var>fmt ...</var> colored or (boldened or underline) with ANSI
-  escapes, for use when formatting to a terminal.
+  Outputs the formatters <var>fmt ...</var> colored or (boldened, italicized
+  or underline) with ANSI escapes, for use when formatting to a terminal.
+</dd>
+
+<dl>
+<dt>(<a name="proc-on-red"><code class="proc-def">on-red</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-on-blue"><code class="proc-def">on-blue</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-on-green"><code class="proc-def">on-green</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-on-cyan"><code class="proc-def">on-cyan</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-on-yellow"><code class="proc-def">on-yellow</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-on-magenta"><code class="proc-def">on-magenta</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-on-white"><code class="proc-def">on-white</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dt>(<a name="proc-on-black"><code class="proc-def">on-black</code></a> <var>fmt</var> <var>...</var>)</dt>
+<dd class="proc-def">
+<p>
+  Outputs the formatters <var>fmt ...</var> with ANSI escapes to set
+  the background color, for use when formatting to a terminal.
 </dd>
 
 <dd class="proc-def"></dd>
@@ -1174,10 +1219,6 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
   accordingly using 8-bit color ANSI escapes.
 </dd>
 
-<p>
-  It is up to the caller to ensure that the terminals support
-  colors.
-
 <dd class="proc-def"></dd>
 <dt>(<a name="proc-as-true-color"><code class="proc-def">as-true-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
 <p>
@@ -1186,12 +1227,30 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
   for use with terminals supporting this.
 </dd>
 
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-on-color"><code class="proc-def">on-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
+<p>
+  The equivalent of <code>as-color</code>, setting the background color.
+</dd>
+
+<dd class="proc-def"></dd>
+<dt>(<a name="proc-on-true-color"><code class="proc-def">on-true-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
+<p>
+  The equivalent of <code>as-true-color</code>, setting the background color.
+</dd>
+
+<p>
+  It is up to the caller to ensure that the terminals support
+  these ANSI escapes.
+
 <h2><a name="Unicode">Unicode</a></h2>
 
 The following procedures are provided in the <code>(srfi 166 unicode)</code> library.
 
+<p>
+
 <dl>
-<dt>(<a name="proc-as-unicode"><code class="proc-def">as-unicode</code></a> <var>fmt</var> <var>...</var>)
+<dt>(<a name="proc-terminal-aware"><code class="proc-def">terminal-aware</code></a> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
 <p>
   Equivalent to
@@ -1199,15 +1258,18 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <pre class="code-example">
     (fn (ambiguous-is-wide?)
       (with ((string-width (if ambiguous-is-wide?
-                               unicode-terminal-width/wide
-                               unicode-terminal-width)))
+                               string-terminal-width/wide
+                               string-terminal-width))
+             (substring/width (if ambiguous-is-wide?
+                                  substring-terminal-width/wide
+                                  substring-terminal-width)))
         fmt ...))
 </pre>
 
   Padding, trimming and tabbing, etc. will generally not do the right
   thing in the presence of zero-width and double-width Unicode
   characters, or ANSI escapes.  This formatter overrides the
-  <var>string-width</var> state var
+  <var>string-width</var> and <var>substring/width</var> state variables
   used in column tracking to do the right thing in such cases,
   considering Unicode double or full width characters as 2 characters
   wide (as they typically are in fixed-width terminals), while
@@ -1220,11 +1282,11 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 =&gt; "〜日本語〜"
 
 ;; the 3 characters have a terminal width of 6 so are not padded
-(show #f (as-unicode (with ((pad-char #\〜)) (padded/both 5 "日本語"))))
+(show #f (terminal-aware (with ((pad-char #\〜)) (padded/both 5 "日本語"))))
 =&gt; "日本語"
 </pre>
 
-<dt>(<a name="proc-unicode-terminal-width"><code class="proc-def">unicode-terminal-width</code></a> <var>str</var>)
+<dt>(<a name="proc-string-terminal-width"><code class="proc-def">string-terminal-width</code></a> <var>str</var>)
 <dd class="proc-def">
 <p>
   A utility function which returns the integer number of columns <var>str</var>
@@ -1245,13 +1307,33 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   current Unicode specification at time of writing this SRFI, 12.0.0.
 </dd>
 
-<dt>(<a name="proc-unicode-terminal-width_2fwide"><code class="proc-def">unicode-terminal-width/wide</code></a> <var>str</var> [start end])
+<dt>(<a name="proc-string-terminal-width_2fwide"><code class="proc-def">string-terminal-width/wide</code></a> <var>str</var> [start end])
 <dd class="proc-def">
 <p>
-  Equivalent to <code>unicode-terminal-width</code>, except that
+  Equivalent to <code>string-terminal-width</code>, except that
   ambiguous characters are counted as 2 columns, as they are in
   certain Japanese environments (notably kterm, fonts such as
   MS Gothic and the system fonts of many Japanese feature phones).
+</dd>
+
+<dt>(<a name="proc-substring-terminal-width"><code class="proc-def">substring-terminal-width</code></a> <var>str</var> <var>from</var> <var>to</var>)
+<dd class="proc-def">
+<p>
+  Returns the substring of <var>str</var>, starting from the first
+  index exceeding <var>from</var> width, to the first index exceeding
+  <var>to</var> width, exclusive, using the notion of width as defined
+  in <code>string-terminal-width</code>.  Note this naturally groups
+  grapheme clusters together.  In addition, if there are ANSI color
+  escapes outside of the selected area, these are extracted and
+  included in the result, so that regardless of where a string is
+  trimmed the color state is preserved.
+</dd>
+
+<dt>(<a name="proc-substring-terminal-width_2fwide"><code class="proc-def">substring-terminal-width/wide</code></a> <var>str</var> <var>from</var> <var>to</var>)
+<dd class="proc-def">
+<p>
+  Equivalent to <code>substring-terminal-width</code>, except that
+  ambiguous characters are counted as 2 columns
 </dd>
 
 <dl>
@@ -1481,6 +1563,18 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 </dd>
 
 <dl>
+<dt><a name="proc-substring_2fwidth"><code class="proc-def">substring/width</code></a> 
+<dd class="proc-def">
+<p>
+  A procedure taking three args: <code>(string from to)</code>,
+  which returns the substring of <var>string</var> whose width is
+  between <var>from</var> and <var>to</var>.  The default value is
+  <code>substring</code>, where <var>from</var> and <var>to</var>
+  correspond directly to indexes.  This should generally be updated
+  in conjunction with <code>string-width</code>.
+</dd>
+
+<dl>
 <dt><a name="proc-pad-char"><code class="proc-def">pad-char</code></a> 
 <dd class="proc-def">
 <p>
@@ -1633,9 +1727,9 @@ Riddles in the Dark....................................................115
 <dt><a name="proc-ambiguous-is-wide"><code class="proc-def">ambiguous-is-wide?</code></a>
 <dd class="proc-def">
 <p>
-  Use to choose between <code>unicode-terminal-width</code> and
-  <code>unicode-terminal-width/wide</code> when formatting with
-  <code>as-unicode</code>.  The default value is implementation
+  Use to choose between <code>string-terminal-width</code> and
+  <code>string-terminal-width/wide</code> when formatting with
+  <code>terminal-aware</code>.  The default value is implementation
   defined.  A reasonable approach might be to check if the TERM
   environment variable is kterm when writing to a terminal.
   One could also check if the recipient of an email were using
