@@ -1,12 +1,12 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
-<html lang=en-US>
+<!DOCTYPE html>
+<html lang="en-US">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="keywords" content="Scheme, programming language, SRFI, format">
+    <meta charset="utf-8">
     <title>SRFI 166: Monadic Formatting</title>
-    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png" />
-    <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css" />
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+    <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Scheme, programming language, SRFI, format">
 <style type="text/css">
 body { 
    max-width: 7.6in;
@@ -32,19 +32,11 @@ var {
   </head>
 
 <body>
-<h1><a name="Title">Title</a></h1>
-<div class="title-text">
+<h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI logo" /></a>166: Monadic Formatting</h1>
 
-<p>
-  SRFI 166: Monadic Formatting
+<p>by Alex Shinn</p>
 
-</div>
-<h1><a name="Author">Author</a></h1>
-
-<p>
-  Alex Shinn
-
-<h1><a name="Status">Status</a></h1>
+<h2><a name="Status">Status</a></h2>
 
 <p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+166+at+srfi+dotschemers+dot+org">srfi-166@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-166">archive</a>.</p>
 <ul>
@@ -55,7 +47,7 @@ var {
   <li>Draft #3 published: 2020-06-08</li>
 </ul>
 
-<h1>Table of Contents</h1>
+<h2>Table of Contents</h2>
 <ul id="toc-table">
 <li><a href="#Abstract">Abstract</a></li>
 <li><a href="#Issues">Issues</a></li>
@@ -82,7 +74,7 @@ var {
 <li><a href="#References">References</a></li>
 </ul>
 
-<h1><a name="Abstract">Abstract</a></h1>
+<h2><a name="Abstract">Abstract</a></h2>
 
 <p>
   A library of procedures for formatting Scheme objects to text in
@@ -94,7 +86,7 @@ var {
   This SRFI is an updated version of SRFI 159, primarily with the
   difference that state variables are hygienic.
 
-<h1><a name="Diffs">Summary of differences from SRFI 156:</a></h1>
+<h2><a name="Diffs">Summary of differences from SRFI 156:</a></h2>
 
 <ul>
   <li>State variables are first class and hygienic</li>
@@ -108,9 +100,9 @@ var {
   <li>Several clarifications and more examples</li>
 </ul>
 
-<h1><a name="Issues">Issues</a></h1>
+<h2><a name="Issues">Issues</a></h2>
 
-<h1><a name="Rationale">Rationale</a></h1>
+<h2><a name="Rationale">Rationale</a></h2>
 
 <p>
   There are several approaches to text formatting. Concatenating
@@ -153,7 +145,7 @@ var {
   arbitrarily large output and not build intermediate results except
   where necessary. The third goal is brevity and ease of use.
 
-<h1>Index</h1>
+<h2>Index</h2>
 <pre>
 <b>Base</b>
 <a href="#proc-show">show</a> <a href="#proc-each">each</a> <a href="#proc-each-in-list">each-in-list</a>
@@ -190,7 +182,7 @@ var {
 <a href="#proc-on-color">on-color</a> <a href="#proc-on-true-color">on-true-color</a>
 </pre>
 
-<h1><a name="Types-and-Naming-Conventions">Types and Naming Conventions</a></h1>
+<h2><a name="Types-and-Naming-Conventions">Types and Naming Conventions</a></h2>
 
 <p>
   We introduce two new types, <code>formatters</code>, which are
@@ -225,7 +217,7 @@ var {
 <li><code>string-join</code>: <code>joined</code>
 
 </ul>
-<h1><a name="Specification">Specification</a></h1>
+<h2><a name="Specification">Specification</a></h2>
 
 <p>
 The SRFI is divided into a core implementation and three utility
@@ -242,7 +234,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </pre>
 
 
-<h2><a name="Usage">Usage</a></h2>
+<h3><a name="Usage">Usage</a></h3>
 
 <dl>
 <dt>(<a name="proc-show"><code class="proc-def">show</code></a> <var>output-dest</var> <var>fmt</var> <var>...</var>)
@@ -289,7 +281,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<h2><a name="Formatting-Objects">Formatting Objects</a></h2>
+<h3><a name="Formatting-Objects">Formatting Objects</a></h3>
 
 <dl>
 <dt>(<a name="proc-displayed"><code class="proc-def">displayed</code></a> <var>obj</var>)
@@ -438,7 +430,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<h2><a name="Formatting-Numbers">Formatting Numbers</a></h2>
+<h3><a name="Formatting-Numbers">Formatting Numbers</a></h3>
 
 <dl>
 <dt>(<a name="proc-numeric"><code class="proc-def">numeric</code></a> <var>num</var> <var>[radix</var> <var>precision</var> <var>sign-rule</var> <var>comma-rule</var> <var>comma-sep</var> <var>decimal-sep]</var>)
@@ -571,7 +563,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<h2><a name="Formatting-Space">Formatting Space</a></h2>
+<h3><a name="Formatting-Space">Formatting Space</a></h3>
 
 <dl>
 <dt><a name="proc-nl"><code class="proc-def">nl</code></a> 
@@ -670,7 +662,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<h2><a name="Concatenation">Concatenation</a></h2>
+<h3><a name="Concatenation">Concatenation</a></h3>
 
 <dl>
 <dt>(<a name="proc-each"><code class="proc-def">each</code></a> <var>fmt</var> <var>...</var>)
@@ -773,7 +765,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<h2><a name="Padding-and-Trimming">Padding and Trimming</a></h2>
+<h3><a name="Padding-and-Trimming">Padding and Trimming</a></h3>
 
 <dl>
 <dt>(<a name="proc-padded"><code class="proc-def">padded</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
@@ -910,7 +902,7 @@ are provided as convenience extensions.  The libraries are as follows:
   it goes under.
 </dd>
 
-<h2><a name="Pretty-Printing">Pretty Printing</a></h2>
+<h3><a name="Pretty-Printing">Pretty Printing</a></h3>
 
 The homoiconic nature of Lisp makes pretty printing an indispensable
 utility for presenting code in a readable format.
@@ -954,7 +946,7 @@ utility for presenting code in a readable format.
   may not be directly parseable with <code>read</code>.
 </dd>
 
-<h2><a name="Columnar-Formatting">Columnar Formatting</a></h2>
+<h3><a name="Columnar-Formatting">Columnar Formatting</a></h3>
 
 The following procedures are provided in the <code>(srfi 166 columnar)</code>
 library.
@@ -1168,7 +1160,7 @@ which might output:
 </dd>
 
 
-<h2><a name="Formatting-with-Color">Formatting with Color</a></h2>
+<h3><a name="Formatting-with-Color">Formatting with Color</a></h3>
 
 The following procedures are provided in the <code>(srfi 166 color)</code> library.
 
@@ -1243,7 +1235,7 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
   It is up to the caller to ensure that the terminals support
   these ANSI escapes.
 
-<h2><a name="Unicode">Unicode</a></h2>
+<h3><a name="Unicode">Unicode</a></h3>
 
 The following procedures are provided in the <code>(srfi 166 unicode)</code> library.
 
@@ -1367,7 +1359,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 </pre>
 </dd>
 
-<h2><a name="Higher-Order-Formatters-and-State">Higher Order Formatters and State</a></h2>
+<h3><a name="Higher-Order-Formatters-and-State">Higher Order Formatters and State</a></h3>
 
 <p>
   Formatters up to this point have been simple accumulators of output,
@@ -1473,7 +1465,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   on the original state.
 </dd>
 
-<h2><a name="State-Variables">State Variables</a></h2>
+<h3><a name="State-Variables">State Variables</a></h3>
 
 <dl>
 <dt>(<a name="proc-port"><code class="proc-def">make-state-variable</code></a> <var>name</var> <var>default</var> [<var>immutable</var>])
@@ -1739,7 +1731,7 @@ Riddles in the Dark....................................................115
 </dd>
 
 
-<h1><a name="Implementation">Implementation</a></h1>
+<h2><a name="Implementation">Implementation</a></h2>
 
 <p>
   A sample implementation in portable R7RS will be available at
@@ -1752,7 +1744,7 @@ Riddles in the Dark....................................................115
   rely on first-class continuations, however an implementation written
   in CPS-style would not require this.
 
-<h1><a name="Acknowledgements">Acknowledgements</a></h1>
+<h2><a name="Acknowledgements">Acknowledgements</a></h2>
 
 <p>
   The author would like to thank everyone who provided feedback
@@ -1763,7 +1755,7 @@ Riddles in the Dark....................................................115
   and Arthur Gleckler for his hard work and super-human patience
   in waiting for me to get my act together.
 
-<h1><a name="References">References</a></h1>
+<h2><a name="References">References</a></h2>
 
 <dl>
 <dt class="biblio"><a name="ref-R7RS"><strong>R7RS</strong></a>
@@ -1838,7 +1830,7 @@ Riddles in the Dark....................................................115
 </pre>
 </dl>
 
-<h1>Copyright</h1>
+<h2>Copyright</h2>
 
 <p>Copyright (C) Alex Shinn 2020. All Rights Reserved.
 
