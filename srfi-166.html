@@ -109,7 +109,7 @@ var {
   There are several approaches to text formatting. Concatenating
   strings to display is not acceptable, since it doesn't scale to very
   large output. The simplest realistic idea, and what people resort to
-  in typical portable Scheme, is to interleave display and write and
+  in typical portable Scheme, is to interleave <code>display</code> and <code>write</code> and
   manual loops, but this is both extremely verbose and doesn't compose
   well. A simple concept such as padding space can't be achieved
   directly without somehow capturing intermediate output.
@@ -142,7 +142,7 @@ var {
   needed, composed with other formatters, and refer to and update
   arbitrary state. The primary goal of this SRFI is to have a
   maximally expressive and extensible formatting library. The next
-  most important goal is scalability - to be able to handle
+  most important goal is scalability &mdash; to be able to handle
   arbitrarily large output and not build intermediate results except
   where necessary. The third goal is brevity and ease of use.
 
@@ -263,7 +263,7 @@ are provided as convenience extensions.  The libraries are as follows:
 <p>
   As mentioned, formatters are an opaque type and cannot directly be
   applied outside of <code>show</code>.  Custom formatters are built on the
-  existing formatters, and as first class objects may be named or
+  existing formatters, and as first-class objects may be named or
   computed dynamically, so that:
 
 <pre class="code-example">
@@ -272,9 +272,9 @@ are provided as convenience extensions.  The libraries are as follows:
 </pre>
 
   produces the same result.  For typical uses you only need to combine
-  the existing high level formatters described in the succeeding
+  the existing high-level formatters described in the succeeding
   sections, but see the section <a href="#Higher-Order-Formatters-and-State">Higher Order Formatters and State</a>
-  for control flow and state manipulation primitives.
+  for control flow and state-manipulation primitives.
 
 <p>
   The return value of <code>show</code> is the accumulated string if
@@ -311,7 +311,7 @@ are provided as convenience extensions.  The libraries are as follows:
   be passed to <code>read</code>, possibly with loss of precision.
   Specifically,
   the current <var>radix</var> is used if set to any of 2, 8, 10 or 16, and the
-  fixed point <var>precision</var> is used if specified and the
+  fixed-point <var>precision</var> is used if specified and the
   <var>radix</var> is 10.
 <pre class="code-example">
 (show #f (written (cons 0 1)))
@@ -355,7 +355,7 @@ are provided as convenience extensions.  The libraries are as follows:
   If you don't know the type of an object and want to print it out
   for debugging purposes, you should always wrap it with <code>written</code>
   or one of its variants, in case the object is itself a formatter.
-  Note for debugging a convenient idiom is to wrap the
+  Note that, for debugging, a convenient idiom is to wrap the
   object(s) in a quasiquote list:
 
 <pre class="code-example">
@@ -836,7 +836,7 @@ are provided as convenience extensions.  The libraries are as follows:
   trimming on word boundaries.
 
 <p>
-  If a truncation <var>ellipsis</var> is set, then when any truncation occurs
+  If a truncation <var>ellipsis</var> is set, then when any truncation occurs,
   <code>trimmed</code> and <code>trimmed/right</code> will prepend and append the
   ellipsis, respectively.  <code>trimmed/both</code> will both prepend and
   append.  The length of the <var>ellipsis</var> will be considered when
@@ -879,7 +879,7 @@ are provided as convenience extensions.  The libraries are as follows:
 <dd class="proc-def">
 <p>
   A variant of <code>trimmed</code> which generates each <var>fmt</var> in
-  left to right order, and truncates and terminates
+  left-to-right order, and truncates and terminates
   immediately if more than <var>width</var> characters are generated.
   Thus this is safe to use with an infinite amount of output,
   e.g. from <code>written-simply</code> on an infinite list.
@@ -912,7 +912,7 @@ utility for presenting code in a readable format.
   print vectors and data lists (lists that don't begin with a (nested)
   symbol) in a tabular format when possible to reduce vertical space.
 
-  Like <code>written</code>, cyclic structure must be detected and
+  As with <code>written</code>, cyclic structure must be detected and
   represented with datum labels.</p>
 </dd>
 
@@ -934,7 +934,7 @@ utility for presenting code in a readable format.
 <p>
   Equivalent to <code>pretty</code>, but may optionally include ANSI escape
   sequences (as in <a href="#Formatting-with-Color">Formatting with Color</a>
-  below) to provide syntax-highlighting.  In such a case, the raw output
+  below) to provide syntax highlighting.  In such a case, the raw output
   may not be directly parseable with <code>read</code>.
 </dd></dl>
 
@@ -1272,8 +1272,8 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <ol>
 <li>non-spacing characters (format control characters with the property Cf, or non-spacing marks with the property Mn) count as 0 columns
 <li>characters with the East Asian Wide (W) or East Asian Fullwidth (F) properties, according to Unicode TR #11, count as 2 columns
-<li>characters with the Halfwidth (H) or Narrow (Na) should count as 1 column
-<li>characters with the Neutral (N) non-East Asian also count as 1 column
+<li>characters with the Halfwidth (H) or Narrow (Na) property should count as 1 column
+<li>characters with the Neutral (N) non-East Asian property also count as 1 column
 <li>characters with the Ambiguous (A) property are 1 columns
 <li>ANSI terminal escapes, as output by the color formatters above, count as 0 columns
 <li>the tab character is implementation defined
@@ -1281,7 +1281,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 
 <p>
   Implementations should support the properties from at least the
-  current Unicode specification at time of writing this SRFI, 12.0.0.
+  current Unicode specification at the time of writing of this SRFI, 12.0.0.
 </dd>
 
 <dt>(<a id="proc-string-terminal-width_2fwide"><code class="proc-def">string-terminal-width/wide</code></a> <var>str</var> [start end])
