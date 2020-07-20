@@ -160,9 +160,13 @@ var {
 <a href="#proc-trimmed">trimmed</a> <a href="#proc-trimmed_2fright">trimmed/right</a> <a href="#proc-trimmed_2fboth">trimmed/both</a>
 <a href="#proc-trimmed_2flazy">trimmed/lazy</a> <a href="#proc-fitted">fitted</a> <a href="#proc-fitted_2fright">fitted/right</a> <a href="#proc-fitted_2fboth">fitted/both</a>
 <a href="#proc-fn">fn</a> <a href="#proc-with">with</a> <a href="#proc-with!">with!</a> <a href="#proc-forked">forked</a> <a href="#proc-call-with-output">call-with-output</a>
+<a href="#proc-make-state-variable">make-state-variable</a>
 <a href="#proc-port">port</a> <a href="#proc-row">row</a> <a href="#proc-col">col</a> <a href="#proc-width">width</a> <a href="#proc-output">output</a> <a href="#proc-writer">writer</a>
-<a href="#proc-string-width">string-width</a> <a href="#proc-pad-char">pad-char</a> <a href="#proc-ellipsis">ellipsis</a>
+<a href="#proc-string-width">string-width</a> <a href="#proc-substring_2fwidth">substring/width</a>
+<a href="#proc-pad-char">pad-char</a> <a href="#proc-ellipsis">ellipsis</a>
 <a href="#proc-radix">radix</a> <a href="#proc-precision">precision</a> <a href="#proc-decimal-sep">decimal-sep</a> <a href="#proc-decimal-align">decimal-align</a>
+<a href="#proc-sign-rule">sign-rule</a> <a href="#proc-comma-rule">comma-rule</a> <a href="#proc-comma-sep">comma-sep</a>
+<a href="#proc-word-separator?">word-separator?</a> <a href="#proc-ambiguous-is-wide?">ambiguous-is-wide?</a>
 <b>Pretty</b>
 <a href="#proc-pretty">pretty</a> <a href="#proc-pretty-shared">pretty-shared</a> <a href="#proc-pretty-simply">pretty-simply</a> <a href="#proc-pretty-with-color">pretty-with-color</a>
 <b>Columnar</b>
@@ -298,7 +302,8 @@ are provided as convenience extensions.  The libraries are as follows:
   in <code>show</code>, <code>each</code> and most other high-level formatters.
 <p>
   It is an error if <var>obj</var> is a procedure which is not a formatter.
-</dd></dl>
+</dd>
+</dl>
 
 <dl>
 <dt>(<a id="proc-written"><code class="proc-def">written</code></a> <var>obj</var>)
@@ -464,8 +469,7 @@ are provided as convenience extensions.  The libraries are as follows:
 
 <p>
   These parameters may seem unwieldy, but they can also take their
-  defaults from state variables, described below, if any are
-  <code>#f</code> or omitted.
+  defaults from state variables, described below, if any are omitted.
 </dd>
 
 <dt>(<a id="proc-numeric_2fcomma"><code class="proc-def">numeric/comma</code></a> <var>num</var> <var>[comma-rule</var> <var>radix</var> <var>precision</var> <var>sign-rule]</var>)
@@ -881,6 +885,7 @@ are provided as convenience extensions.  The libraries are as follows:
   A variant of <code>trimmed</code> which generates each <var>fmt</var> in
   left-to-right order, and truncates and terminates
   immediately if more than <var>width</var> characters are generated.
+  It does not output <var>ellipsis</var>.
   Thus this is safe to use with an infinite amount of output,
   e.g. from <code>written-simply</code> on an infinite list.
 </dd>
@@ -953,11 +958,12 @@ library.
 <dt>(<a id="proc-columnar"><code class="proc-def">columnar</code></a> <var>column</var> <var>...</var>)
 <dd class="proc-def">
 <p>
-  Formats each <var>column</var> side-by-side, i.e. as though each were
-  formatted separately and then the individual lines concatenated
+  Formats each <var>column</var> side-by-side, i.e. as though each
+  were formatted separately and then the individual lines concatenated
   together.  The current line width (from the <var>width</var> state
-  variable) is divided evenly among the columns, and all but the last
-  column are right-padded.  For example
+  variable) is divided evenly among the columns (setting their state
+  variables accordingly), and all but the last column are
+  right-padded.  For example
 
 <pre class="code-example">
 (show #t (columnar (displayed "abc\ndef\n")
@@ -990,6 +996,11 @@ def     456
 /* def | 456 */
 </pre>
 
+  Padding ensures alignment only under the assumption that no columns
+  are wider than their allocated width.  You can use wrapping or
+  trimming to enforce the underlying width.
+
+<p>
   You may also prefix any column with any of the symbols <var>'left</var>,
   <var>'right</var> or <var>'center</var> to control the justification.  The symbol
   <var>'infinite</var> can be used to indicate the column generates an infinite
@@ -1003,7 +1014,9 @@ def     456
   with unspecified width divide up the remaining width evenly.  If the
   extra space does not divide evenly, it is allocated column-wise left
   to right, e.g. if the width of 78 is divided among 5 columns, the
-  column widths become 16, 16, 16, 15, 15 in order.
+  column widths become 16, 16, 16, 15, 15 in order.  Note if explicit
+  widths are used, <code>columnar</code> may not take up the full
+  available width.
 
 <p>
   The value of the <var>col</var> state variable is reset to 0 at
@@ -1012,13 +1025,19 @@ def     456
 
 <p>
   Note that <code>columnar</code> builds its output incrementally,
-  interleaving calls to the generators until each has produced a line,
-  then concatenating that line together and outputting it.  This is
-  important because as noted above, some columns may produce an
-  infinite stream of output, and in general you may want to format
+  interleaving calls to the column formatters until each has produced
+  a line, then concatenating that line together and outputting it.
+  When a formatter has been exhausted, it contributes empty lines
+  until all non-infinite columns are exhausted, at which point the
+  output is complete.
+  This is important because as noted above, some columns may produce
+  an infinite stream of output, and in general you may want to format
   data larger than can fit into memory.  Thus columnar would be
   suitable for line numbering a file of arbitrary size, or
   implementing the Unix <code>yes(1)</code> command, etc.
+
+<p>
+  The degenerate case of no columns produces a single blank line.
 </dd>
 
 <dt>(<a id="proc-tabular"><code class="proc-def">tabular</code></a> <var>column</var> <var>...</var>)
@@ -1044,6 +1063,11 @@ def     456
   advance.  However, because it requires generating the entire output
   in advance to determine the correct column widths, <code>tabular</code>
   cannot format a table larger than would fit in memory.
+
+<p>
+  Note that since <code>tabular</code> computes explicit widths for all
+  columns, it will use the most compact width for unspecified columns
+  and not necessarily consume the full available width.
 </dd>
 
 <dt>(<a id="proc-wrapped"><code class="proc-def">wrapped</code></a> <var>fmt</var> <var>...</var>)
@@ -1057,6 +1081,9 @@ def     456
   Words are grouped into lines separating them by space, and line
   breaks are introduced to minimize the
   sum of the cube of trailing whitespace on every line.
+<p>
+  The last line is not appended with a newline, so that in the trivial
+  case of a single line this is equivalent to each (but reducing whitespace).
 </dd>
 
 <dt>(<a id="proc-wrapped_2flist"><code class="proc-def">wrapped/list</code></a> <var>list-of-strings</var>)
@@ -1501,11 +1528,12 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <dd class="proc-def">
 <p>
   The underlying standard formatter for writing a single string.  The
-  default value outputs the string while tracking the current <var>row</var>
-  and <var>col</var>.  This can be overridden both to capture intermediate
-  output and perform transformations on strings before outputting, but
-  should generally wrap the existing <var>output</var> to preserve expected
-  behavior.
+  default value outputs the string to <var>port</var> while tracking
+  the current <var>row</var> and <var>col</var>.  This can be
+  overridden both to capture intermediate output and perform
+  transformations on strings before outputting, but should generally
+  wrap the existing <var>output</var> to preserve expected behavior.
+  You should not write to <var>port</var> except via <var>output</var>.
 
   The default output procedure is exported as <code>output-default</code>.
 </dd>
@@ -1515,7 +1543,9 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <p>
   The mapper for automatic formatting of non-string/char values in
   top-level <code>show</code>, <code>each</code> and other formatters.
-  Default value is implementation-defined.
+  The default value is implementation-defined, but should format in
+  sexp notation.  One could override this to format other programming
+  languages.
 </dd>
 
 <dt><a id="proc-string-width"><code class="proc-def">string-width</code></a> 
