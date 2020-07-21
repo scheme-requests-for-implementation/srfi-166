@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="keywords" content="Scheme, programming language, SRFI, format">
 <style>
-body { 
+body {
    max-width: 7.6in;
    margin: 30pt;
 }
@@ -572,7 +572,7 @@ are provided as convenience extensions.  The libraries are as follows:
 <h3><a id="Formatting-Space">Formatting Space</a></h3>
 
 <dl>
-<dt><a id="proc-nl"><code class="proc-def">nl</code></a> 
+<dt><a id="proc-nl"><code class="proc-def">nl</code></a>
 <dd class="proc-def">
 <p>
   Outputs a newline.
@@ -584,7 +584,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<dt><a id="proc-fl"><code class="proc-def">fl</code></a> 
+<dt><a id="proc-fl"><code class="proc-def">fl</code></a>
 <dd class="proc-def">
 <p>
   Short for "fresh line," outputs a newline only if we're not already
@@ -655,7 +655,7 @@ are provided as convenience extensions.  The libraries are as follows:
 </dd>
 
 
-<dt><a id="proc-nothing"><code class="proc-def">nothing</code></a> 
+<dt><a id="proc-nothing"><code class="proc-def">nothing</code></a>
 <dd class="proc-def">
 <p>
   Outputs nothing (useful in combinators and as a default noop in
@@ -1225,7 +1225,7 @@ def     456
 which might output:
 
 <pre class="output-example">
-   1 
+   1
    2 (define (read-line . o)
    3   (let ((port (if (pair? o) (car o) (current-input-port))))
    4     (let lp ((res '()))
@@ -1583,7 +1583,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   formatters in this SRFI.  These are all exported by the
   <code>(srfi 166 base)</code> library.</p></dd>
 
-<dt><a id="proc-port"><code class="proc-def">port</code></a> 
+<dt><a id="proc-port"><code class="proc-def">port</code></a>
 <dd class="proc-def">
 <p>
   The textual port output is written to, this can be overridden to
@@ -1593,14 +1593,14 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   the values of <var>row</var> and <var>col</var> are unspecified.
 </dd>
 
-<dt><a id="proc-row"><code class="proc-def">row</code></a> 
+<dt><a id="proc-row"><code class="proc-def">row</code></a>
 <dd class="proc-def">
 <p>
   The current row of output, starting at 0 regardless of what
   may previously have been written to <var>port</var>.
 </dd>
 
-<dt><a id="proc-col"><code class="proc-def">col</code></a> 
+<dt><a id="proc-col"><code class="proc-def">col</code></a>
 <dd class="proc-def">
 <p>
   The current column of output, used for padding and spacing, etc.,
@@ -1608,14 +1608,14 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   to <var>port</var>.
 </dd>
 
-<dt><a id="proc-width"><code class="proc-def">width</code></a> 
+<dt><a id="proc-width"><code class="proc-def">width</code></a>
 <dd class="proc-def">
 <p>
   The current line width, used for columnar, wrapping and pretty-printing.
   The default is implementation-defined.
 </dd>
 
-<dt><a id="proc-output"><code class="proc-def">output</code></a> 
+<dt><a id="proc-output"><code class="proc-def">output</code></a>
 <dd class="proc-def">
 <p>
   The underlying standard formatter for writing a single string.  The
@@ -1629,7 +1629,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   The default output procedure is exported as <code>output-default</code>.
 </dd>
 
-<dt><a id="proc-writer"><code class="proc-def">writer</code></a> 
+<dt><a id="proc-writer"><code class="proc-def">writer</code></a>
 <dd class="proc-def">
 <p>
   The mapper for automatic formatting of non-string/char values in
@@ -1639,7 +1639,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   languages.
 </dd>
 
-<dt><a id="proc-string-width"><code class="proc-def">string-width</code></a> 
+<dt><a id="proc-string-width"><code class="proc-def">string-width</code></a>
 <dd class="proc-def">
 <p>
   A procedure taking three args: <code>(string [start end])</code>,
@@ -1649,7 +1649,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   default treats each character as a width of 1, returning <code>(- end start)</code>.
 </dd>
 
-<dt><a id="proc-substring_2fwidth"><code class="proc-def">substring/width</code></a> 
+<dt><a id="proc-substring_2fwidth"><code class="proc-def">substring/width</code></a>
 <dd class="proc-def">
 <p>
   A procedure taking three args: <code>(string from to)</code>,
@@ -1672,7 +1672,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   be overriden as in <code>substring-terminal/preserve</code>.
 </dd>
 
-<dt><a id="proc-pad-char"><code class="proc-def">pad-char</code></a> 
+<dt><a id="proc-pad-char"><code class="proc-def">pad-char</code></a>
 <dd class="proc-def">
 <p>
   The character used by <code>space-to</code>, <code>tab-to</code> and other padding
@@ -1705,21 +1705,21 @@ Riddles in the Dark....................................................115
 </dd>
 
 
-<dt><a id="proc-ellipsis"><code class="proc-def">ellipsis</code></a> 
+<dt><a id="proc-ellipsis"><code class="proc-def">ellipsis</code></a>
 <dd class="proc-def">
 <p>
   The string used when truncating as described in <code>trimmed</code>,
   default the empty string.
 </dd>
 
-<dt><a id="proc-radix"><code class="proc-def">radix</code></a> 
+<dt><a id="proc-radix"><code class="proc-def">radix</code></a>
 <dd class="proc-def">
 <p>
   The radix for numeric output, defaulting to 10, as used in
   <code>numeric</code> and <code>written</code>.
 </dd>
 
-<dt><a id="proc-precision"><code class="proc-def">precision</code></a> 
+<dt><a id="proc-precision"><code class="proc-def">precision</code></a>
 <dd class="proc-def">
 <p>
   The precision for numeric output, as described in
@@ -1756,13 +1756,13 @@ Riddles in the Dark....................................................115
 
 </dd>
 
-<dt><a id="proc-decimal-sep"><code class="proc-def">decimal-sep</code></a> 
+<dt><a id="proc-decimal-sep"><code class="proc-def">decimal-sep</code></a>
 <dd class="proc-def">
 <p>
   The decimal separator for floating point output, default ".".
 </dd>
 
-<dt><a id="proc-decimal-align"><code class="proc-def">decimal-align</code></a> 
+<dt><a id="proc-decimal-align"><code class="proc-def">decimal-align</code></a>
 <dd class="proc-def">
 <p>
   Specifies an alignment for the decimal place when formatting
@@ -1787,16 +1787,16 @@ Riddles in the Dark....................................................115
 </pre>
 </dd>
 
-<dt><a id="proc-sign-rule"><code class="proc-def">sign-rule</code></a> 
-<dt><a id="proc-comma-rule"><code class="proc-def">comma-rule</code></a> 
-<dt><a id="proc-comma-sep"><code class="proc-def">comma-sep</code></a> 
+<dt><a id="proc-sign-rule"><code class="proc-def">sign-rule</code></a>
+<dt><a id="proc-comma-rule"><code class="proc-def">comma-rule</code></a>
+<dt><a id="proc-comma-sep"><code class="proc-def">comma-sep</code></a>
 <dd class="proc-def">
 <p>
   Additional vars used for formatting as described in
   <a href="#Formatting-Numbers">formatting numbers</a>.
 </dd>
 
-<dt><a id="proc-word-separator?"><code class="proc-def">word-separator?</code></a> 
+<dt><a id="proc-word-separator?"><code class="proc-def">word-separator?</code></a>
 <dd class="proc-def">
 <p>
   A character predicate used to tokenize words for
