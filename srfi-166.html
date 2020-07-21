@@ -52,7 +52,7 @@ var {
 <ul id="toc-table">
 <li><a href="#Abstract">Abstract</a></li>
 <li><a href="#Issues">Issues</a></li>
-<li><a href="#Diffs">Summary of differences from SRFI 156</a></li>
+<li><a href="#Diffs">Summary of differences from SRFI 159</a></li>
 <li><a href="#Rationale">Rationale</a></li>
 <li><a href="#Types-and-Naming-Conventions">Types and Naming Conventions</a></li>
 <li><a href="#Specification">Specification</a></li>
@@ -87,14 +87,16 @@ var {
   This SRFI is an updated version of SRFI 159, primarily with the
   difference that state variables are hygienic.
 
-<h2><a id="Diffs">Summary of differences from SRFI 156:</a></h2>
+<h2><a id="Diffs">Summary of differences from SRFI 159:</a></h2>
 
 <ul>
   <li>State variables are first class and hygienic</li>
   <li>Added <code>written-shared</code>, <code>pretty-shared</code></li>
   <li>Added <code>as-italic</code>, <code>as-color</code>, <code>as-true-color</code>, <code>on-<i>color</i></code> background variants, and <code>pretty-with-color</code></li>
   <li>Added <code>ambiguous-is-wide?</code> state variable and <code>string-terminal-width/wide</code> utility</li>
-  <li>Added <code>substring/width</code> state var used in trimming, with <code>substring-terminal-width(/wide)</code> utilities</li>
+  <li>Added <code>substring/width</code> state var for width-aware substring operations, with <code>substring-terminal-width(/wide)</code> utilities</li>
+  <li>Added <code>substring/preserve</code> state var used in trimming, with <code>substring-terminal-preserve</code> utility</li>
+  <li>Added <code>pretty-environment</code> state variable</li>
   <li>Renamed <code>as-unicode</code> to <code>terminal-aware</code></li>
   <li>Restored non-uniform comma rules as needed in India</li>
   <li>Restored <code>upcased</code> and <code>downcased</code></li>
@@ -163,6 +165,7 @@ var {
 <a href="#proc-make-state-variable">make-state-variable</a>
 <a href="#proc-port">port</a> <a href="#proc-row">row</a> <a href="#proc-col">col</a> <a href="#proc-width">width</a> <a href="#proc-output">output</a> <a href="#proc-writer">writer</a>
 <a href="#proc-string-width">string-width</a> <a href="#proc-substring_2fwidth">substring/width</a>
+<a href="#proc-substring_2fpreserve">substring/preserve</a>
 <a href="#proc-pad-char">pad-char</a> <a href="#proc-ellipsis">ellipsis</a>
 <a href="#proc-radix">radix</a> <a href="#proc-precision">precision</a> <a href="#proc-decimal-sep">decimal-sep</a> <a href="#proc-decimal-align">decimal-align</a>
 <a href="#proc-sign-rule">sign-rule</a> <a href="#proc-comma-rule">comma-rule</a> <a href="#proc-comma-sep">comma-sep</a>
@@ -176,6 +179,7 @@ var {
 <a href="#proc-terminal-aware">terminal-aware</a>
 <a href="#proc-string-terminal-width">string-terminal-width</a> <a href="#proc-string-terminal-width_2fwide">string-terminal-width/wide</a>
 <a href="#proc-substring-terminal-width">substring-terminal-width</a> <a href="#proc-substring-terminal-width_2fwide">substring-terminal-width/wide</a>
+<a href="#proc-substring-terminal-preserve">substring-terminal-preserve</a>
 <a href="#proc-upcased">upcased</a> <a href="#proc-downcased">downcased</a>
 <b>Color</b>
 <a href="#proc-as-red">as-red</a> <a href="#proc-as-blue">as-blue</a> <a href="#proc-as-green">as-green</a> <a href="#proc-as-cyan">as-cyan</a>
@@ -768,6 +772,17 @@ are provided as convenience extensions.  The libraries are as follows:
 
 <h3><a id="Padding-and-Trimming">Padding and Trimming</a></h3>
 
+Formatters for ensuring output expands to, does not exceed, or fits
+exactly within a specified width.  Width is measured with the
+<code>string-width</code> state variable, and trimming is then done by
+calling <code>substring/width</code> state variableon the desired left
+and right <i>widths</i>.  The default values for these are
+<code>string-length</code> and <code>substring</code>, indicating the
+widths are are equivalent to string indexes, however this may have
+different semantics as in <code>terminal-aware</code> discussed below,
+and other extensions could be imagined such as enforcing trimming on
+word boundaries.
+
 <dl>
 <dt>(<a id="proc-padded"><code class="proc-def">padded</code></a> <var>width</var> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
@@ -830,16 +845,6 @@ are provided as convenience extensions.  The libraries are as follows:
   If <var>width</var> is not exceeded, is equivalent to <code>each</code>.
 
 <p>
-  Width is measured with <code>string-width</code>, and trimming is
-  then done by calling <code>substring/width</code> on the desired
-  left and right <i>widths</i>.  The default values for these are
-  <code>string-length</code> and <code>substring</code>, indicating
-  the widths are are equivalent to string indexes, however this may
-  have different semantics as in <code>terminal-aware</code> discussed
-  below, and other extensions could be imagined such as enforcing
-  trimming on word boundaries.
-
-<p>
   If a truncation <var>ellipsis</var> is set, then when any truncation occurs,
   <code>trimmed</code> and <code>trimmed/right</code> will prepend and append the
   ellipsis, respectively.  <code>trimmed/both</code> will both prepend and
@@ -848,9 +853,66 @@ are provided as convenience extensions.  The libraries are as follows:
   be longer than <var>width</var>.  It is an error if <var>width</var> is
   less than the length of <var>ellipsis</var>, or double the length for /both.
 
+<p>
+  If the state variable <code>substring/preserve</code> is not
+  <code>#f</code>, then this is called on the left and/or right
+  portions of the output which have been excluded by trim, and the
+  result of this is output in place of the trimmed text.  The default
+  is <code>#f</code> (do nothing), but it can be useful to override
+  this to preserve control sequences which are zero-width regardless
+  but affect the state of the output stream.  In particular
+  <code>substring-terminal/preserve</code> as enabled in
+  <code>terminal-aware</code> preserves ANSI control sequences and
+  bidirectional overrides.
+
+<p>
+  For example, consider
+
 <pre class="code-example">
-(show #f (with ((ellipsis "...")) (trimmed 5 "abcde")))
+(show #f (with ((ellipsis "…")) (trimmed/both 5 "abcdef")))
+=&gt;  "…bcd…"
+</pre>
+
+  Here we note that the output width of 6 exceeds the requested width
+  of 5 and trimming must be done.  Since the ellipsis width is 1, we
+  must split the trimming to remove one character from the left and
+  two from the right.  Thus, the output is computed as:
+
+<pre class="code-example">
+(let ((str "abcdef"))
+  (each (substring/preserve (substring/width str -1 1))
+        ellipsis
+        (substring/width str 1 4)
+        ellipsis
+        (substring/preserve (substring/width str 4 6))))
+</pre>
+
+<p>
+  Additional examples:
+
+<pre class="code-example">
+(show #f (trimmed 5 "abcde"))
 =&gt;  "abcde"
+</pre>
+
+<pre class="code-example">
+(show #f (trimmed 5 "abcdef"))
+=&gt;  "bcdef"
+</pre>
+
+<pre class="code-example">
+(show #f (trimmed/right 5 "abcdef"))
+=&gt;  "abcde"
+</pre>
+
+<pre class="code-example">
+(show #f (trimmed/both 5 "abcdef"))
+=&gt;  "abcde"
+</pre>
+
+<pre class="code-example">
+(show #f (trimmed/both 4 "abcdef"))
+=&gt;  "bcde"
 </pre>
 
 <pre class="code-example">
@@ -937,7 +999,7 @@ utility for presenting code in a readable format.
 <dt>(<a id="proc-pretty-with-color"><code class="proc-def">pretty-with-color</code></a> <var>obj</var>)
 <dd class="proc-def">
 <p>
-  Equivalent to <code>pretty</code>, but may optionally include ANSI escape
+  Equivalent to <code>pretty</code>, but may optionally include ANSI control
   sequences (as in <a href="#Formatting-with-Color">Formatting with Color</a>
   below) to provide syntax highlighting.  In such a case, the raw output
   may not be directly parseable with <code>read</code>.
@@ -1080,7 +1142,9 @@ def     456
   <var>word-separator?</var>, which defaults to <code>char-whitespace?</code>.
   Words are grouped into lines separating them by space, and line
   breaks are introduced to minimize the
-  sum of the cube of trailing whitespace on every line.
+  sum of the cube of trailing whitespace on every line while
+  ensuring no line exceeds <var>width</var> (as measured with
+  the <var>string-width</var> state variable).
 <p>
   The last line is not appended with a newline, so that in the trivial
   case of a single line this is equivalent to each (but reducing whitespace).
@@ -1195,7 +1259,7 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
 <dd class="proc-def">
 <p>
   Outputs the formatters <var>fmt ...</var> colored or (boldened, italicized
-  or underline) with ANSI escapes, for use when formatting to a terminal.
+  or underline) with ANSI control sequences, for use when formatting to a terminal.
 </dd>
 
 <dt>(<a id="proc-on-red"><code class="proc-def">on-red</code></a> <var>fmt</var> <var>...</var>)</dt>
@@ -1209,7 +1273,7 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
 <dt>(<a id="proc-on-black"><code class="proc-def">on-black</code></a> <var>fmt</var> <var>...</var>)</dt>
 <dd class="proc-def">
 <p>
-  Outputs the formatters <var>fmt ...</var> with ANSI escapes to set
+  Outputs the formatters <var>fmt ...</var> with ANSI control sequences to set
   the background color, for use when formatting to a terminal.
 </dd>
 
@@ -1220,7 +1284,7 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
   should be an exact integer in the range <code>[0, 5]</code>,
   representing the corresponding components
   of an RGB color model.  Outputs the formatters colored
-  accordingly using 8-bit color ANSI escapes.</p>
+  accordingly using 8-bit color ANSI control sequences.</p>
 </dd>
 
 <dt>(<a id="proc-as-true-color"><code class="proc-def">as-true-color</code></a> <var>red</var> <var>green</var> <var>blue</var> <var>fmt</var> <var>...</var>)</dt>
@@ -1245,7 +1309,7 @@ The following procedures are provided in the <code>(srfi 166 color)</code> libra
 
 <p>
   It is up to the caller to ensure that the terminals support
-  these ANSI escapes.
+  these ANSI control sequences.
 
 <h3><a id="Unicode">Unicode</a></h3>
 
@@ -1266,13 +1330,14 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
                                string-terminal-width))
              (substring/width (if ambiguous-is-wide?
                                   substring-terminal-width/wide
-                                  substring-terminal-width)))
+                                  substring-terminal-width))
+             (substring/preserve substring-terminal/preserve))
         fmt ...))
 </pre>
 
 <p>Padding, trimming and tabbing, etc. will generally not do the right
   thing in the presence of zero-width and double-width Unicode
-  characters, or ANSI escapes.  This formatter overrides the
+  characters, or ANSI control sequences.  This formatter overrides the
   <var>string-width</var> and <var>substring/width</var> state variables
   used in column tracking to do the right thing in such cases,
   considering Unicode double or full width characters as 2 characters
@@ -1302,7 +1367,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <li>characters with the Halfwidth (H) or Narrow (Na) property should count as 1 column
 <li>characters with the Neutral (N) non-East Asian property also count as 1 column
 <li>characters with the Ambiguous (A) property are 1 columns
-<li>ANSI terminal escapes, as output by the color formatters above, count as 0 columns
+<li>ANSI terminal control sequences, as output by the color formatters above, count as 0 columns
 <li>the tab character is implementation defined
 </ol>
 
@@ -1324,13 +1389,34 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <dd class="proc-def">
 <p>
   Returns the substring of <var>str</var>, starting from the first
-  index exceeding <var>from</var> width, to the first index exceeding
+  index where the total string width exceeds <var>from</var> width,
+  inclusive, to the first index exceeding
   <var>to</var> width, exclusive, using the notion of width as defined
   in <code>string-terminal-width</code>.  Note this naturally groups
-  grapheme clusters together.  In addition, if there are ANSI color
-  escapes outside of the selected area, these are extracted and
-  included in the result, so that regardless of where a string is
-  trimmed the color state is preserved.
+  grapheme clusters together by excluding leading modifiers and including
+  trailing modifiers.  If <var>str</var> includes only single-width characters,
+  this definition is equivalent to <code>substring</code>.  A negative
+  <var>start</var> can be used to effectively include all leading
+  zero-width characters.
+
+<pre class="code-example">
+(substring-terminal-width "ａｂｃ" 0 6)
+=&gt; "ａｂｃ"
+(substring-terminal-width "ａｂｃ" 0 4)
+=&gt; "ａｂ"
+(substring-terminal-width "ａｂｃ" 2 6)
+=&gt; "ｂｃ"
+(substring-terminal-width "ａｂｃ" 1 4)
+=&gt; "ａｂ"
+(substring-terminal-width "ａｂｃ" 1 5)
+=&gt; "ａｂ"
+(substring-terminal-width "ａｂｃ" 2 4)
+=&gt; "ｂ"
+(substring-terminal-width "ａｂｃ" 2 3)
+=&gt; ""
+(substring-terminal-width "ａｂｃ" -1 2)
+=&gt; "ａ"
+</pre>
 </dd>
 
 <dt>(<a id="proc-substring-terminal-width_2fwide"><code class="proc-def">substring-terminal-width/wide</code></a> <var>str</var> <var>from</var> <var>to</var>)
@@ -1340,6 +1426,16 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   ambiguous characters are counted as 2 columns
 </dd>
 
+<dt>(<a id="proc-substring-terminal-preserve"><code class="proc-def">substring-terminal-preserve</code></a> <var>str</var>)
+<dd class="proc-def">
+<p>
+  Returns only the substring sequences of <var>str</var> which would
+  have non-local implications for rendering the text in a terminal.
+  Specifically, preserves ANSI color control sequences, as well as the
+  directional formatting characters described in the
+  <a href="#TR9">Unicode Bidirectional Algorithm</a>.
+</dd>
+
 <dt>(<a id="proc-upcased"><code class="proc-def">upcased</code></a> <var>fmt</var> <var>...</var>)
 <dt>(<a id="proc-downcased"><code class="proc-def">downcased</code></a> <var>fmt</var> <var>...</var>)
 <dd class="proc-def">
@@ -1347,9 +1443,9 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   Runs the formatters <var>fmt ...</var>, but with all output
   translated as if first passed to <code>string-upcase</code> or
   <code>string-downcase</code>, respectively.  Note these should
-  also work correctly when combined with the ANSI escapes from
+  also work correctly when combined with the ANSI control sequences from
   <a href="#Formatting-with-Color">formatting with color</a>,
-  which includes ASCII letters in the escapes.
+  which includes ASCII letters in the control sequences.
 <p>
   Note there should be no internal buffering, which may have
   an effect on context-sensitive casing.  For example, if an
@@ -1377,11 +1473,6 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   with no control flow or handling of state.  Both of these are
   provided by <code>fn</code> and <code>with</code> for getting and setting
   state, respectively.
-
-<!-- <p> -->
-<!--   As noted above, a formatter is a SRFI 165 computation, i.e. the -->
-<!--   monadic value of an environment monad, where state variables are the -->
-<!--   environment variables. -->
 
 <dl>
 <dt>(<a id="proc-fn"><code class="proc-def">fn</code></a> ((<var>id</var> <var>state-var</var>) ...) <var>expr</var> ... <var>fmt</var>)
@@ -1554,7 +1645,8 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   A procedure taking three args: <code>(string [start end])</code>,
   where start and end are optional, defaulting to the 0 and
   <code>(string-length string)</code> respectively.  Returns the
-  length in columns of that string within the given range.
+  length in columns of that string within the given range.  The
+  default treats each character as a width of 1, returning <code>(- end start)</code>.
 </dd>
 
 <dt><a id="proc-substring_2fwidth"><code class="proc-def">substring/width</code></a> 
@@ -1566,6 +1658,18 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
   <code>substring</code>, where <var>from</var> and <var>to</var>
   correspond directly to indexes.  This should generally be updated
   in conjunction with <code>string-width</code>.
+</dd>
+
+<dt><a id="proc-substring_2fpreserve"><code class="proc-def">substring/preserve</code></a>
+<dd class="proc-def">
+<p>
+  A procedure taking three args with the same semantics as
+  <code>substring/width</code>: <code>(string from to)</code>, which
+  returns any control characters or sequences which have non-local
+  implications and thus should not be removed by a
+  <code>trimmed</code> operation.  The default value is
+  <code>#f</code>, indicating nothing needs to be preserved, but can
+  be overriden as in <code>substring-terminal/preserve</code>.
 </dd>
 
 <dt><a id="proc-pad-char"><code class="proc-def">pad-char</code></a> 
@@ -1701,18 +1805,6 @@ Riddles in the Dark....................................................115
   available with <code>wrapped/list</code>.
 </dd>
 
-<!--
-<dt><a id="proc-color"><code class="proc-def">color</code></a> 
-<dt><a id="proc-bold"><code class="proc-def">bold</code></a> 
-<dt><a id="proc-underline"><code class="proc-def">underline</code></a> 
-<dd class="proc-def">
-<p>
-  Stores the current terminal properties when using
-  <a href="#Formatting-with-Color">formatting with color</a>, to
-  restore properly when nesting.
-</dd>
--->
-
 <dt><a id="proc-ambiguous-is-wide?"><code class="proc-def">ambiguous-is-wide?</code></a>
 <dd class="proc-def">
 <p>
@@ -1727,6 +1819,13 @@ Riddles in the Dark....................................................115
   their fonts.
 </dd></dl>
 
+<dt><a id="proc-pretty-environment"><code class="proc-def">pretty-environment</code></a>
+<dd class="proc-def">
+<p>
+  An environment which may optionally be used for hints in the pretty
+  printing formatters, defaulting to <code>(interaction-environment)</code>.
+</dd></dl>
+
 
 <h2><a id="Implementation">Implementation</a></h2>
 
@@ -1734,7 +1833,10 @@ Riddles in the Dark....................................................115
   A sample implementation in portable R7RS will be available at
   <a href="https://github.com/ashinn/chibi-scheme/blob/master/lib/srfi/166.sld">https://github.com/ashinn/chibi-scheme/blob/master/lib/srfi/166.sld</a>,
   and included files, depending on SRFI 1, 69, 117, 130, 165.  It is
-  mostly the same as in SRFI 159.
+  mostly the same as in SRFI 159.  Two alternative implementations
+  are also available, one by Adam Nelson at
+  <a href="https://github.com/ar-nelson/schemepunk/tree/show">https://github.com/ar-nelson/schemepunk/tree/show</a>,
+  and one by Marc Nieper-Wißkirchen at <a href="https://gitlab.com/nieper/show">https://gitlab.com/nieper/show</a>.
 
 <p>
   Note <code>columnar</code> and <code>trimmed/lazy</code>
@@ -1744,13 +1846,13 @@ Riddles in the Dark....................................................115
 <h2><a id="Acknowledgements">Acknowledgements</a></h2>
 
 <p>
-  The author would like to thank everyone who provided feedback
-  for SRFI 159 and SRFI 166, in particular Marc Nieper-Wißkirchen
-  for detailed feedback and bug reports and work on an alternate
-  implementation, Jim Rees who provided many bugfixes early on,
-  John Cowan for early editorial comments,
-  and Arthur Gleckler for his hard work and super-human patience
-  in waiting for me to get my act together.</p>
+  The author would like to thank everyone who provided feedback for
+  SRFI 159 and SRFI 166, in particular Marc Nieper-Wißkirchen for
+  detailed feedback and bug reports and work on an alternate
+  implementation, Adam Nelson for his implementation, Jim Rees who
+  provided many bugfixes early on, John Cowan for early editorial
+  comments, and Arthur Gleckler for his hard work and super-human
+  patience in waiting for me to get my act together.</p>
 
 <h2><a id="References">References</a></h2>
 
@@ -1818,6 +1920,13 @@ Riddles in the Dark....................................................115
       <a href="http://synthcode.com/scheme/fmt/">http://synthcode.com/scheme/fmt/</a>
 </pre>
 
+
+<dt class="biblio"><a id="ref-TR9"><strong>TR9</strong></a>
+<dd>
+<pre class="biblio">
+      Mark Davis et al., Unicode® Standard Annex #9 - Unicode Bidirectional Algorithm
+      <a href="https://www.unicode.org/reports/tr9/">https://www.unicode.org/reports/tr9/</a>
+</pre>
 
 <dt class="biblio"><a id="ref-TR11"><strong>TR11</strong></a>
 <dd>
