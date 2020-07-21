@@ -1389,14 +1389,15 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <dd class="proc-def">
 <p>
   Returns the substring of <var>str</var>, starting from the first
-  index exceeding <var>from</var> width, to the first index exceeding
+  index where the total string width exceeds <var>from</var> width,
+  inclusive, to the first index exceeding
   <var>to</var> width, exclusive, using the notion of width as defined
   in <code>string-terminal-width</code>.  Note this naturally groups
   grapheme clusters together by excluding leading modifiers and including
   trailing modifiers.  If <var>str</var> includes only single-width characters,
   this definition is equivalent to <code>substring</code>.  A negative
   <var>start</var> can be used to effectively include all leading
-  characters.
+  zero-width characters.
 
 <pre class="code-example">
 (substring-terminal-width "ａｂｃ" 0 6)
