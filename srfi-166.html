@@ -1545,7 +1545,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <p>
    As the current formatting state can be captured or reentered with
    continuations, <code>with!</code> should be used with caution, and
-   may produce unexpected output in cases.
+   may produce unexpected output in some cases.
 </dd>
 
 <dt>(<a id="proc-forked"><code class="proc-def">forked</code></a> <var>fmt1</var> <var>fmt2</var>)
@@ -1587,7 +1587,7 @@ The following procedures are provided in the <code>(srfi 166 unicode)</code> lib
 <dt><a id="proc-port"><code class="proc-def">port</code></a>
 <dd class="proc-def">
 <p>
-  The textual port output is written to, this can be overridden to
+  The textual port output is written to.  This can be overridden to
   capture intermediate output.  If any output is made to port by
   parallel computations and/or side-effecting Scheme procedures
   during the dynamic extent of a call to <code>show</code>, then
@@ -1730,7 +1730,7 @@ Riddles in the Dark....................................................115
   represent it than precision, the written representation is chosen
   which is closest to the numeric value and representable with the
   specified precision.  If the numeric value falls on the midpoint of
-  two such representations, it is implementation dependent which
+  two such representations, it is implementation-dependent which
   representation is chosen.
 
 <p>
@@ -1811,8 +1811,8 @@ Riddles in the Dark....................................................115
 <p>
   Use to choose between <code>string-terminal-width</code> and
   <code>string-terminal-width/wide</code> when formatting with
-  <code>terminal-aware</code>.  The default value is implementation
-  defined.  A reasonable approach might be to check if the TERM
+  <code>terminal-aware</code>.  The default value is implementation-defined.
+  A reasonable approach might be to check if the TERM
   environment variable is kterm when writing to a terminal.
   One could also check if the recipient of an email were using
   a .jp email address, however frequent users of the ambiguous
