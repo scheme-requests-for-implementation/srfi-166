@@ -8,7 +8,7 @@ keywords: [[https://srfi.schemers.org/?keywords=i/o][I/O]]
 
 This repository hosts [[https://srfi.schemers.org/srfi-166/][SRFI 166]]: Monadic Formatting, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
-This SRFI is in /draft/ status.
+This SRFI is in /final/ status.
 
 See also [[https://srfi.schemers.org/srfi-13/][SRFI 13: String Libraries]], [[https://srfi.schemers.org/srfi-159/][SRFI 159: Combinator Formatting]], and [[https://srfi.schemers.org/srfi-165/][SRFI 165: The Environment Monad]].
 
