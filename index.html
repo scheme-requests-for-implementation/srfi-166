@@ -1,103 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Monadic Formatting</title>
-    <link href="/admin.css" rel="stylesheet">
-    <link href="/list.css" rel="stylesheet">
-    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script type="text/x-mathjax-config">
-     MathJax.Hub.Config({
-       tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
-     });
-    </script>
-    <script crossorigin="anonymous" integrity=
-            "sha384-Ra6zh6uYMmH5ydwCqqMoykyf1T/+ZcnOQfFPhDrp2kI4OIxadnhsvvA2vv9A7xYv" src=
-            "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
-            type="text/javascript"></script>
-  </head>
-
-  <body>
-    <h1>SRFI 166: Monadic Formatting</h1>
-    <p class="authors">by Alex Shinn</p>
-    <p class="based-on"></p>
-    <p class="status">status: <em>final</em> (2020-07-30)</p>
-    <p class="keywords">keywords: <a href="https://srfi.schemers.org/?keywords=i/o">I/O</a></p><span class="see-also">See also <a href="/srfi-13/">SRFI 13: String Libraries</a>, <a href="/srfi-159/">SRFI 159: Combinator Formatting</a>, and <a href="/srfi-165/">SRFI 165: The Environment Monad</a>.</span>
-
-    <ul class="info">
-      <li><a href="srfi-166.html">The SRFI Document</a></li>
-      <li><a href="https://srfi-email.schemers.org/srfi-166/">Discussion Archive</a></li>
-      <li><a href="https://github.com/scheme-requests-for-implementation/srfi-166">Git repo (on Github)</a></li>
-      <li>
-        <a href="mailto:srfi-166@srfi.schemers.org">srfi-166@<span class="antispam">nospam</span>srfi.schemers.org (subscribers only)</a></li>
-      <li>
-        <span class="firefox-column-workaround">
-          <form method="POST" action="https://www.simplelists.com/subscribe.php">
-            <div class="title">Subscribe to srfi-166 mailing list</div>
-            <input name="email"
-                   placeholder="email address"
-                   tabindex="1"
-                   type="email" >
-            <input name="name"
-                   placeholder="full name"
-                   tabindex="2"
-                   type="text" >
-            <p>
-              <input id="sub-digest"
-                     name="digest"
-                     tabindex="3"
-                     type="checkbox"
-                     value="digest" >
-              <label for="sub-digest">daily digest?</label></p>
-            <input class="submit"
-                   name="submit"
-                   tabindex="4"
-                   type="submit"
-                   value="Subscribe to srfi-166" >
-            <input type="hidden" name="action" value="subscribe">
-            <input type="hidden" name="list" value="srfi-166@srfi.schemers.org"></form></a></li>
-      <li>
-        <span class="firefox-column-workaround">
-          <form method="POST" action="https://www.simplelists.com/subscribe.php">
-            <p class="title">Unsubscribe from srfi-166 mailing list</p>
-            <input name="email"
-                   placeholder="email address"
-                   tabindex="5"
-                   type="email" >
-            <input class="submit"
-                   name="submit"
-                   tabindex="6"
-                   type="submit"
-                   value="Unsubscribe from srfi-166" >
-            <input name="action"
-                   type="hidden"
-                   value="unsubscribe" >
-            <input name="list"
-                   type="hidden"
-                   value="srfi-166@srfi.schemers.org"></form></a></li></ul>
-    <h2>Abstract</h2><p>
-  A library of procedures for formatting Scheme objects to text in
-  various ways, and for easily concatenating, composing and extending
-  these formatters efficiently without resorting to capturing and
-  manipulating intermediate strings.</p>
-
-<p>
-  This SRFI is an updated version of SRFI 159, primarily with the
-  difference that state variables are hygienic.</p>
-
-<p>
-Summary of differences from SRFI 159:
-<ul>
-  <li>State variables are first class and hygienic</li>
-  <li>Added <code>written-shared</code>, <code>pretty-shared</code></li>
-  <li>Added <code>as-italic</code>, <code>as-color</code>, <code>as-true-color</code>, <code>on-<i>color</i></code> background variants, and <code>pretty-with-color</code></li>
-  <li>Added <code>ambiguous-is-wide?</code> state variable and <code>string-terminal-width/wide</code> utility</li>
-  <li>Added <code>substring/width</code> state var for width-aware substring operations, with <code>substring-terminal-width(/wide)</code> utilities</li>
-  <li>Added <code>substring/preserve</code> state var used in trimming, with <code>substring-terminal-preserve</code> utility</li>
-  <li>Added <code>pretty-environment</code> state variable</li>
-  <li>Renamed <code>as-unicode</code> to <code>terminal-aware</code></li>
-  <li>Restored non-uniform comma rules as needed in India</li>
-  <li>Restored <code>upcased</code> and <code>downcased</code></li>
-  <li>Several clarifications and more examples</li>
-</ul></body></html>
+    <head>
+      <!-- SPDX-FileCopyrightText: 2025 Arthur A. Gleckler -->
+      <!-- SPDX-License-Identifier: MIT -->
+      <title>Monadic Formatting</title>
+      <link href="/admin.css" rel="stylesheet">
+      <link href="/list.css" rel="stylesheet">
+      <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+      <script crossorigin="anonymous" integrity="sha384-Ra6zh6uYMmH5ydwCqqMoykyf1T/+ZcnOQfFPhDrp2kI4OIxadnhsvvA2vv9A7xYv" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script></head>
+    <body>
+      <h1>SRFI 166: Monadic Formatting</h1>
+      <p class="authors">by Alex Shinn</p>
+      <p class="based-on"></p>
+      <p class="status">status: <em>final</em> (2020-07-30)</p>
+      <p class="keywords">keywords: <a href="https://srfi.schemers.org/?keywords=i/o">I/O</a>, <a href="https://srfi.schemers.org/?keywords=text">Text</a></p><span class="see-also">See also <a href="/srfi-13/">SRFI 13: String Libraries</a>, <a href="/srfi-159/">SRFI 159: Combinator Formatting</a>, and <a href="/srfi-165/">SRFI 165: The Environment Monad</a>.</span>
+      <ul class="info">
+        <li><a href="srfi-166.html">The SRFI Document</a></li>
+        <li><a href="https://srfi-email.schemers.org/srfi-166/">Discussion Archive</a></li>
+        <li><a href="https://github.com/scheme-requests-for-implementation/srfi-166">Git repo (on GitHub)</a></li>
+        <li><a href="mailto:srfi-166@srfi.schemers.org">srfi-166@<span class="antispam">nospam</span>srfi.schemers.org (subscribers only)</a></li>
+        <li><span class="firefox-column-workaround">
+            <form method="POST" action="https://www.simplelists.com/subscribe.php">
+              <div class="title">Subscribe to srfi-166 mailing list</div><input name="email" placeholder="email address" tabindex="1" type="email"><input name="name" placeholder="full name" tabindex="2" type="text">
+              <p><input id="sub-digest" name="digest" tabindex="3" type="checkbox" value="digest"><label for="sub-digest">daily digest?</label></p><input class="submit" name="submit" tabindex="4" type="submit" value="Subscribe to srfi-166"><input type="hidden" name="action" value="subscribe"><input type="hidden" name="list" value="srfi-166@srfi.schemers.org"></form></span></li>
+        <li><span class="firefox-column-workaround">
+            <form method="POST" action="https://www.simplelists.com/subscribe.php">
+              <div class="title">Unsubscribe from srfi-166 mailing list</div><input name="email" placeholder="email address" tabindex="5" type="email"><input class="submit" name="submit" tabindex="6" type="submit" value="Unsubscribe from srfi-166"><input type="hidden" name="action" value="unsubscribe"><input name="list" type="hidden" value="srfi-166@srfi.schemers.org"></form></span></li></ul>
+      <h2>Abstract</h2><p>   A library of procedures for formatting Scheme objects to text in   various ways, and for easily concatenating, composing and extending   these formatters efficiently without resorting to capturing and   manipulating intermediate strings.</p>  <p>   This SRFI is an updated version of SRFI 159, primarily with the   difference that state variables are hygienic.</p>  <p> Summary of differences from SRFI 159: <ul>   <li>State variables are first class and hygienic</li>   <li>Added <code>written-shared</code>, <code>pretty-shared</code></li>   <li>Added <code>as-italic</code>, <code>as-color</code>, <code>as-true-color</code>, <code>on-<i>color</i></code> background variants, and <code>pretty-with-color</code></li>   <li>Added <code>ambiguous-is-wide?</code> state variable and <code>string-terminal-width/wide</code> utility</li>   <li>Added <code>substring/width</code> state var for width-aware substring operations, with <code>substring-terminal-width(/wide)</code> utilities</li>   <li>Added <code>substring/preserve</code> state var used in trimming, with <code>substring-terminal-preserve</code> utility</li>   <li>Added <code>pretty-environment</code> state variable</li>   <li>Renamed <code>as-unicode</code> to <code>terminal-aware</code></li>   <li>Restored non-uniform comma rules as needed in India</li>   <li>Restored <code>upcased</code> and <code>downcased</code></li>   <li>Several clarifications and more examples</li> </ul></body></html>

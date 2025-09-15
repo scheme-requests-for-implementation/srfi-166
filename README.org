@@ -1,22 +1,22 @@
+
+# SPDX-FileCopyrightText: 2025 Arthur A. Gleckler
+# SPDX-License-Identifier: MIT
 * SRFI 166: Monadic Formatting
 
 ** by Alex Shinn
 
 
 
-keywords: [[https://srfi.schemers.org/?keywords=i/o][I/O]]
+keywords: [[https://srfi.schemers.org/?keywords=i/o][I/O]], [[https://srfi.schemers.org/?keywords=text][Text]]
 
 This repository hosts [[https://srfi.schemers.org/srfi-166/][SRFI 166]]: Monadic Formatting, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /final/ status.
-
-See also [[https://srfi.schemers.org/srfi-13/][SRFI 13: String Libraries]], [[https://srfi.schemers.org/srfi-159/][SRFI 159: Combinator Formatting]], and [[https://srfi.schemers.org/srfi-165/][SRFI 165: The Environment Monad]].
-
+See also [[/srfi-13/][SRFI 13: String Libraries]], [[/srfi-159/][SRFI 159: Combinator Formatting]], and [[/srfi-165/][SRFI 165: The Environment Monad]].
 The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-166/srfi-166.html][SRFI Document]].
 
 If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[https://srfi.schemers.org/srfi-166/][join the SRFI-166 mailing list]] and send your message there.
 
 Thank you.
-
 
 [[mailto:srfi-editors@srfi.schemers.org][The SRFI Editors]]
